@@ -1,96 +1,84 @@
 import React from 'react';
 
+import {ScrollView, NativeModules, View} from 'react-native';
 import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
   Text,
-  StatusBar,
-  NativeModules,
-} from 'react-native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+  ButtonGroup,
+  Card,
+  Input,
+  Button,
+  withTheme,
+} from 'react-native-elements';
+import Evilicon from 'react-native-vector-icons/EvilIcons';
 
-const DataPlan = () => {
+const DataPlan = props => {
+  const cycleButtons = [
+    {
+      element: () => <Text style={{fontSize: 20}}>1 Month</Text>,
+    },
+    {
+      element: () => <Text style={{fontSize: 20}}>1 Week</Text>,
+    },
+    {
+      element: () => <Text style={{fontSize: 20}}>1 Day</Text>,
+    },
+  ];
+  const {theme} = props;
   return (
     <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Output from Data Usage</Text>
-              <Text style={styles.sectionDescription}>
-                {NativeModules.DataUssageModule ? (
-                  NativeModules.DataUsageModule.listDataUsageByApps(
-                    {},
-                    (err, jsonArrayStr) => {
-                      if (!err) {
-                        var apps = JSON.parse(jsonArrayStr);
-                        console.log(apps);
-                        for (var i = 0; i < apps.length; i++) {
-                          var app = apps[i];
-                          `App name: ${app.name}
-                          Package name: ${app.packageName}
-                          Received bytes: ${app.rx} bytes Transmitted bytes: $
-                          {app.tx} bytes Received MB: ${app.rxMb}
-                          Transmitted MB: ${app.txMb}
-                          .`;
-                        }
-                      }
-                    },
-                  )
-                ) : (
-                  <Text>Sorry It's Not Working</Text>
-                )}
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+      <ScrollView>
+        <Card title="Data Cycle">
+          <ButtonGroup
+            onPress={null}
+            selectedIndex={0}
+            buttons={cycleButtons}
+            containerStyle={{height: 60}}
+          />
+        </Card>
+        <Card title="Date Settings">
+          <Input
+            placeholder="Start Date"
+            leftIcon={
+              <Evilicon
+                name="calendar"
+                size={25}
+                color={theme.colors.primary}
+              />
+            }
+            label="Start Date"
+          />
+          <Input
+            placeholder="End Date"
+            leftIcon={
+              <Evilicon
+                name="calendar"
+                size={25}
+                color={theme.colors.primary}
+              />
+            }
+            label="End Date"
+          />
+        </Card>
+        <Card title="Data Usage">
+          <Input
+            placeholder="Available Data"
+            leftIcon={
+              <Evilicon name="chart" size={25} color={theme.colors.primary} />
+            }
+            label="Available Data"
+          />
+          <Input
+            placeholder="Used Data"
+            leftIcon={
+              <Evilicon name="close" size={25} color={theme.colors.primary} />
+            }
+            label="Used Data"
+          />
+        </Card>
+        <Button title="Save Changes" buttonStyle={{padding: 20, margin: 12}} />
+      </ScrollView>
     </>
   );
 };
 
-export default DataPlan;
-
-const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
-});
+export default withTheme(DataPlan);

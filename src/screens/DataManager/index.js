@@ -1,19 +1,60 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-  NativeModules,
-  Alert,
-} from 'react-native';
+import {ScrollView, View, NativeModules, Linking} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import {Header} from 'react-native-elements';
-
+import {
+  Text,
+  Card,
+  Button,
+  Divider,
+  Avatar,
+  ListItem,
+} from 'react-native-elements';
+import {
+  VictoryBar,
+  VictoryChart,
+  VictoryTheme,
+  VictoryPie,
+  VictoryContainer,
+} from 'victory-native';
 const DataManager = () => {
+  const apps = [
+    {
+      appName: 'this awesome app',
+      usage: 34,
+      icon: {title: 'app'},
+    },
+    {
+      appName: 'this awesome app',
+      usage: 34,
+      icon: () => {
+        <Avatar title="app" />;
+      },
+    },
+    {
+      appName: 'this awesome app',
+      usage: 34,
+      icon: () => {
+        <Avatar title="app" />;
+      },
+    },
+    {
+      appName: 'this awesome app',
+      usage: 34,
+      icon: () => {
+        <Avatar title="app" />;
+      },
+    },
+  ];
+  const data = [
+    {quarter: 1, earnings: 13000},
+    {quarter: 2, earnings: 16500},
+    {quarter: 3, earnings: 14250},
+    {quarter: 4, earnings: 19000},
+    ,
+  ];
+
   // if (NativeModules.DataUsageModule) {
   //   // Get data usage of all installed apps in current device
   //   // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
@@ -120,7 +161,80 @@ const DataManager = () => {
   //     },
   //   );
   // }
-  return <Text>THis is th edata management page</Text>;
+  const url = 'http://www.netguard.me/';
+  return (
+    <ScrollView>
+      <Card containerStyle={{margin: 5}}>
+        <View
+          style={{
+            marginBottom: 15,
+            paddingHorizontal: 25,
+          }}>
+          <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+            <Text h1 h1Style={{fontSize: 80, color: '#1565C0'}}>
+              132
+            </Text>
+            <View style={{flexDirection: 'column'}}>
+              <Text h1> MB </Text>
+              <Text h2> Left</Text>
+            </View>
+          </View>
+        </View>
+        <View style={{marginBottom: 10, padding: 25}}>
+          <Text h4 style={{marginBottom: 5}}>
+            Total Plan: 500 MB
+          </Text>
+          <Text h4>Data Used: 500 MB</Text>
+        </View>
+        <Button
+          title="Restrict Internet Access"
+          type="outline"
+          raised
+          onPress={() => {
+            Linking.canOpenURL(url)
+              .then(supported => {
+                if (!supported) {
+                  console.log("Can't handle url: " + url);
+                } else {
+                  return Linking.openURL(url);
+                }
+              })
+              .catch(err => console.error('An error occurred', err));
+          }}
+        />
+      </Card>
+      <Divider style={{marginTop: 15, marginHorizontal: 5}} />
+      <Card wrapperStyle={{justifyContent: 'center', height: 300}}>
+        <VictoryPie
+          containerComponent={<VictoryContainer responsive />}
+          theme={VictoryTheme.grayscale}
+          data={[
+            {x: '', y: 40},
+            {x: '', y: 60},
+            {x: '', y: 60},
+            {x: '', y: 60},
+            {x: '', y: 60},
+          ]}
+          labels={() => {
+            null;
+          }}
+        />
+      </Card>
+
+      <Divider style={{marginTop: 15, marginHorizontal: 5}} />
+      <View>
+        {apps.map((item, index) => (
+          <ListItem
+            key={index}
+            leftAvatar={{title: 'MD'}}
+            title={item.appName}
+            subtitle={`${item.usage} MB`}
+            bottomDivider
+          />
+        ))}
+      </View>
+    </ScrollView>
+  );
 };
 
 export default DataManager;

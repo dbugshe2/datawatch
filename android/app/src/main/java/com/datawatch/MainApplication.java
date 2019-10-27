@@ -4,14 +4,14 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import com.oblador.vectoricons.VectorIconsPackage; //  for vector icons
+//import com.oblador.vectoricons.VectorIconsPackage; //  for vector icons
+//import com.github.wumke.RNImmediatePhoneCall.RNImmediatePhoneCallPackage; //immediate phone calls
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -29,6 +29,8 @@ public class MainApplication extends Application implements ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
             // packages.add(new VectorIconsPackage());
+//            packages.add(new RNImmediatePhoneCallPackage());
+
           return packages;
         }
 

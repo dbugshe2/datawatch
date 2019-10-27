@@ -1,96 +1,90 @@
 import React from 'react';
 
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-  NativeModules,
-} from 'react-native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+import {SafeAreaView, StyleSheet, ScrollView, View} from 'react-native';
+// import Ionicon from 'react-native-vector-icons/Ionicons';
+import {ActivityIndicator} from 'react-native';
+import {getBrand, getCarrier, getTotalMemory} from 'react-native-device-info';
+import {Card, Text} from 'react-native-elements';
 
-const DeviceInfo = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Output from Data Usage</Text>
-              <Text style={styles.sectionDescription}>
-                {NativeModules.DataUssageModule ? (
-                  NativeModules.DataUsageModule.listDataUsageByApps(
-                    {},
-                    (err, jsonArrayStr) => {
-                      if (!err) {
-                        var apps = JSON.parse(jsonArrayStr);
-                        console.log(apps);
-                        for (var i = 0; i < apps.length; i++) {
-                          var app = apps[i];
-                          `App name: ${app.name}
-                          Package name: ${app.packageName}
-                          Received bytes: ${app.rx} bytes Transmitted bytes: $
-                          {app.tx} bytes Received MB: ${app.rxMb}
-                          Transmitted MB: ${app.txMb}
-                          .`;
-                        }
-                      }
-                    },
-                  )
-                ) : (
-                  <Text>Sorry It's Not Working</Text>
-                )}
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
-};
+class DeviceInfo extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      brand: '',
+      carrier: '',
+      ram: '',
+      ipaddress: '',
+      loading: true,
+    };
+  }
+  getAllDeviceInfo = async () => {
+    await Promise.all([getBrand(), getCarrier(), getTotalMemory()])
+      .then(result => {
+        this.setState({
+          brand: result[0],
+          carrier: result[1],
+          ram: result[2],
+          loading: false,
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState({
+          loading: false,
+        });
+      });
+  };
+
+  componentDidMount() {
+    this.getAllDeviceInfo();
+  }
+  render() {
+    const {loading} = this.state;
+    return (
+      <>
+        <SafeAreaView>
+          <ScrollView contentInsetAdjustmentBehavior="automatic">
+            {loading ? (
+              <View style={[styles.container, styles.horizontal]}>
+                <ActivityIndicator size="large" color="#0000ff" />
+              </View>
+            ) : (
+              <View>
+                <Card>
+                  <Text>Band: </Text>
+                  <Text>{this.state.brand}</Text>
+                </Card>
+                <Card>
+                  <Text>Carrier: </Text>
+                  <Text>{this.state.carrier}</Text>
+                </Card>
+                <Card>
+                  <Text>IP Address: </Text>
+                  <Text>{this.state.ipaddress}</Text>
+                </Card>
+                <Card>
+                  <Text>RAM: </Text>
+                  <Text>{this.state.ram}</Text>
+                </Card>
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </>
+    );
+  }
+}
 
 export default DeviceInfo;
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
+  horizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 10,
   },
 });

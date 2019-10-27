@@ -6,7 +6,7 @@ import {createMaterialBottomTabNavigator} from 'react-navigation-material-bottom
 import DataManager from '../screens/DataManager';
 import DataPlan from '../screens/DataPlan';
 import DeviceInfo from '../screens/DeviceInfo';
-import Icon from 'react-native-vector-icons/AntDesign';
+import Ionicon from 'react-native-vector-icons/Ionicons';
 
 const DataManagerStack = createStackNavigator({
   DataManagerScreen: {
@@ -20,7 +20,7 @@ const DataPlanStack = createStackNavigator({
   DataPlanScreen: {
     screen: DataPlan,
     navigationOptions: {
-      title: 'Data Plan',
+      title: 'Set Data Plan',
     },
   },
 });
@@ -40,7 +40,7 @@ const App = createMaterialBottomTabNavigator(
       navigationOptions: {
         tabBarLabel: 'Home',
         tabBarIcon: ({tintColor}) => {
-          <Icon name="home" size={25} color={tintColor} />;
+          return <Ionicon name={'ios-home'} size={25} color={tintColor} />;
         },
       },
     },
@@ -49,7 +49,7 @@ const App = createMaterialBottomTabNavigator(
       navigationOptions: {
         tabBarLabel: 'Plan',
         tabBarIcon: ({tintColor}) => {
-          <Icon name="wallet" size={25} color={tintColor} />;
+          return <Ionicon name={'ios-wallet'} size={25} color={tintColor} />;
         },
       },
     },
@@ -58,13 +58,16 @@ const App = createMaterialBottomTabNavigator(
       navigationOptions: {
         tabBarLabel: 'Device',
         tabBarIcon: ({tintColor}) => {
-          <Icon name="mobile1" size={25} color={tintColor} />;
+          return (
+            <Ionicon name={'ios-phone-portrait'} size={25} color={tintColor} />
+          );
         },
       },
     },
   },
   {
     initialRouteName: 'Home',
+    barStyle: {backgroundColor: '#1565C0'},
   },
 );
 

@@ -22,12 +22,14 @@ export default class AppContextProvider extends Component {
           PermissionsAndroid.PERMISSIONS.ACCESS_NETWORK_STATE,
           PermissionsAndroid.PERMISSIONS.CHANGE_NETWORK_STATE,
           PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
         ).then(result => {
           if (
             result['android.permission.ACCESS_FINE_LOCATION'] &&
             result['android.permission.ACCESS_COARSE_LOCATION'] &&
             result['android.permission.ACCESS_NETWORK_STATE'] &&
             result['android.permission.CHANGE_NETWORK_STATE'] &&
+            result['android.permission.CALL_PHONE'] &&
             result['android.permission.READ_PHONE_STATE'] === 'granted'
           ) {
             console.log('read phone permission granted');
@@ -39,6 +41,7 @@ export default class AppContextProvider extends Component {
             result['android.permission.ACCESS_COARSE_LOCATION'] ||
             result['android.permission.ACCESS_NETWORK_STATE'] ||
             result['android.permission.CHANGE_NETWORK_STATE'] ||
+            result['android.permission.CALL_PHONE'] ||
             result['android.permission.READ_PHONE_STATE'] === 'never_ask_again'
           ) {
             ToastAndroid.showWithGravity(

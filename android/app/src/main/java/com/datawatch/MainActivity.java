@@ -3,7 +3,7 @@ package com.datawatch;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
-import com.swmansion.gesturehandler.react.RNGestureHandlerEnabledRootView;
+//import com.swmansion.gesturehandler.react.RNGestureHandlerEnabledRootView; // gesture handler
 
 // code from datausage
 import android.Manifest;
@@ -18,37 +18,39 @@ import android.provider.Settings;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
+// import com.github.wumke.RNImmediatePhoneCall.RNImmediatePhoneCallPackage; //imediate phone call
+
 public class MainActivity extends ReactActivity {
 
-  /**
-   * Returns the name of the main component registered from JavaScript. This is used to schedule
-   * rendering of the component.
-   */
-  @Override
-  protected String getMainComponentName() {
-    return "datawatch";
-  }
+        /**
+         * Returns the name of the main component registered from JavaScript. This is
+         * used to schedule rendering of the component.
+         */
+        @Override
+        protected String getMainComponentName() {
+                return "datawatch";
+        }
 
-  // adding data usage
-  private static final int READ_PHONE_STATE_REQUEST = 37;
+        // adding data usage
+        private static final int READ_PHONE_STATE_REQUEST = 37;
 
-    @Override
+        @Override
         protected void onResume() {
                 super.onResume();
                 requestPermissions();
         }
 
         private void requestPermissions() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!hasPermissionToReadNetworkHistory()) {
-                        return;
-                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (!hasPermissionToReadNetworkHistory()) {
+                                return;
+                        }
 
-                if (!hasPermissionToReadPhoneStats()) {
-                        requestPhoneStateStats();
-                        return;
+                        if (!hasPermissionToReadPhoneStats()) {
+                                requestPhoneStateStats();
+                                return;
+                        }
                 }
-            }
         }
 
         @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -58,36 +60,38 @@ public class MainActivity extends ReactActivity {
                         return true;
                 }
                 final AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-                int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(), getPackageName());
+                int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(),
+                                getPackageName());
                 if (mode == AppOpsManager.MODE_ALLOWED) {
                         return true;
                 }
-                appOps.startWatchingMode(AppOpsManager.OPSTR_GET_USAGE_STATS,
-                        getApplicationContext().getPackageName(),
-                        new AppOpsManager.OnOpChangedListener() {
-                                @Override
-                                @TargetApi(Build.VERSION_CODES.M)
-                                public void onOpChanged(String op, String packageName) {
-                                        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
-                                        if (mode != AppOpsManager.MODE_ALLOWED) {
-                                                return;
+                appOps.startWatchingMode(AppOpsManager.OPSTR_GET_USAGE_STATS, getApplicationContext().getPackageName(),
+                                new AppOpsManager.OnOpChangedListener() {
+                                        @Override
+                                        @TargetApi(Build.VERSION_CODES.M)
+                                        public void onOpChanged(String op, String packageName) {
+                                                int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                                                                android.os.Process.myUid(), getPackageName());
+                                                if (mode != AppOpsManager.MODE_ALLOWED) {
+                                                        return;
+                                                }
+                                                appOps.stopWatchingMode(this);
+                                                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                                                if (getIntent().getExtras() != null) {
+                                                        intent.putExtras(getIntent().getExtras());
+                                                }
+                                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                                                | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                getApplicationContext().startActivity(intent);
                                         }
-                                        appOps.stopWatchingMode(this);
-                                        Intent intent = new Intent(MainActivity.this, MainActivity.class);
-                                        if (getIntent().getExtras() != null) {
-                                                intent.putExtras(getIntent().getExtras());
-                                        }
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        getApplicationContext().startActivity(intent);
-                                }
-                });
+                                });
                 requestReadNetworkHistoryAccess();
                 return false;
         }
 
         private boolean hasPermissionToReadPhoneStats() {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED) {
+                if (ActivityCompat.checkSelfPermission(this,
+                                Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED) {
                         return false;
                 } else {
                         return true;
@@ -100,19 +104,25 @@ public class MainActivity extends ReactActivity {
         }
 
         private void requestPhoneStateStats() {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_PHONE_STATE}, READ_PHONE_STATE_REQUEST);
+                ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.READ_PHONE_STATE },
+                                READ_PHONE_STATE_REQUEST);
         }
         // end of data usage section
 
+        // immediate phone call section
+        // @Override
+        // public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        //         RNImmediatePhoneCallPackage.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        //         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // }
 
-  @Override
-  protected ReactActivityDelegate createReactActivityDelegate() {
-      return new ReactActivityDelegate(this, getMainComponentName()) {
-      @Override
-      protected ReactRootView createRootView() {
-             return new RNGestureHandlerEnabledRootView(MainActivity.this);
-            }
-    };
-      }
+//        @Override
+//        protected ReactActivityDelegate createReactActivityDelegate() {
+//                return new ReactActivityDelegate(this, getMainComponentName()) {
+//                        @Override
+//                        protected ReactRootView createRootView() {
+//                                return new RNGestureHandlerEnabledRootView(MainActivity.this);
+//                        }
+//                };
+//        }
 }
-
