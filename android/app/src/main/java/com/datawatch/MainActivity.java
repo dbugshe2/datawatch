@@ -18,7 +18,7 @@ import android.provider.Settings;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
-// import com.github.wumke.RNImmediatePhoneCall.RNImmediatePhoneCallPackage; //imediate phone call
+import com.github.wumke.RNImmediatePhoneCall.RNImmediatePhoneCallPackage; //imediate phone call
 
 public class MainActivity extends ReactActivity {
 

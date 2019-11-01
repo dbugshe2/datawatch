@@ -1,240 +1,313 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
-import {ScrollView, View, NativeModules, Linking} from 'react-native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+import {
+  ScrollView,
+  View,
+  NativeModules,
+  Linking,
+  Alert,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+// eslint-disable-next-line no-unused-vars
+import IntentLauncher, {IntentConstant} from 'react-native-intent-launcher';
+import ProgressCircle from 'react-native-progress-circle';
 import {
   Text,
   Card,
   Button,
   Divider,
-  Avatar,
   ListItem,
+  withTheme,
+  Badge,
 } from 'react-native-elements';
-import {
-  VictoryBar,
-  VictoryChart,
-  VictoryTheme,
-  VictoryPie,
-  VictoryContainer,
-} from 'victory-native';
-const DataManager = () => {
-  const apps = [
-    {
-      appName: 'this awesome app',
-      usage: 34,
-      icon: {title: 'app'},
-    },
-    {
-      appName: 'this awesome app',
-      usage: 34,
-      icon: () => {
-        <Avatar title="app" />;
-      },
-    },
-    {
-      appName: 'this awesome app',
-      usage: 34,
-      icon: () => {
-        <Avatar title="app" />;
-      },
-    },
-    {
-      appName: 'this awesome app',
-      usage: 34,
-      icon: () => {
-        <Avatar title="app" />;
-      },
-    },
-  ];
-  const data = [
-    {quarter: 1, earnings: 13000},
-    {quarter: 2, earnings: 16500},
-    {quarter: 3, earnings: 14250},
-    {quarter: 4, earnings: 19000},
-    ,
-  ];
+import {AppContext} from '../../context/AppContext';
+import {bytesToGB} from '../../common/utility';
+import DataPlan from '../DataPlan/index';
 
-  // if (NativeModules.DataUsageModule) {
-  //   // Get data usage of all installed apps in current device
-  //   // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
-  //   NativeModules.DataUsageModule.listDataUsageByApps(
-  //     {
-  //       startDate: new Date(2017, 4, 22, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
-  //       endDate: new Date().getTime(),
-  //     },
-  //     (err, jsonArrayStr) => {
-  //       if (!err) {
-  //         var apps = JSON.parse(jsonArrayStr);
-  //         console.log(apps);
-  //         for (var i = 0; i < apps.length; i++) {
-  //           var app = apps[i];
-  //           console.log(
-  //             'App name: ' +
-  //               app.name +
-  //               '\n' +
-  //               'Package name: ' +
-  //               app.packageName +
-  //               '\n' +
-  //               'Received bytes: ' +
-  //               app.rx +
-  //               'bytes\n' +
-  //               'Transmitted bytes: ' +
-  //               app.tx +
-  //               'bytes\n' +
-  //               'Received MB: ' +
-  //               app.rxMb +
-  //               '\n' +
-  //               'Transmitted MB: ' +
-  //               app.txMb,
-  //           );
-  //         }
-  //       }
-  //     },
-  //   );
+class DataManager extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      appsUsage: [{name: '', tx: 0, rx: 0, txMb: '', rxMb: '', icon: ''}],
+      usageReady: false,
+      totalUsage: 0.0,
+    };
+  }
+  componentDidMount() {
+    if (NativeModules.DataUsageModule) {
+      // Get data usage of all installed apps in current device
+      // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
+      NativeModules.DataUsageModule.listDataUsageByApps(
+        {
+          startDate: new Date(2019, 10, 22, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+          endDate: new Date().getTime(),
+        },
+        (err, jsonArrayStr) => {
+          if (!err) {
+            var apps = JSON.parse(jsonArrayStr);
+            this.setState({
+              appsUsage: apps,
+              usageReady: true,
+            });
+          }
+        },
+      );
+    } // end of data usage
+  }
+  getTotalUsage = () => {
+    let totalUsage = this.state.appsUsage
+      .map(app => {
+        return app.total;
+      })
+      .reduce((acc, appTotalBytes) => {
+        return acc + appTotalBytes;
+      }, 0);
+    return bytesToGB(totalUsage);
+  };
+  render() {
+    // this app relies on netguard to restrict the internet connection of other appps
+    const url =
+      'https://play.google.com/store/apps/details?id=eu.faircode.netguard';
+    const theme = this.props.theme;
+    return (
+      <AppContext.Consumer>
+        {context => {
+          return (
+            <ScrollView>
+              <Card title="Device Data Usage" containerStyle={{margin: 5}}>
+                <View
+                  style={{
+                    marginBottom: 8,
+                    paddingHorizontal: 10,
+                    justifyContent: 'space-between',
+                    flexDirection: 'row',
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignContent: 'flex-end',
+                    }}>
+                    {this.state.usageReady ? (
+                      <Text h1 h1Style={{fontSize: 40, color: '#1565C0'}}>
+                        {this.getTotalUsage()}
+                      </Text>
+                    ) : (
+                      <ActivityIndicator
+                        style={{marginRight: 40}}
+                        size="large"
+                        color="#0000ff"
+                      />
+                    )}
+                    <View style={{flexDirection: 'column'}}>
+                      <Text h2> GB </Text>
+                      <Text h3> Left</Text>
+                    </View>
+                  </View>
+                  <ProgressCircle
+                    percent={40}
+                    radius={50}
+                    borderWidth={8}
+                    color="#3399FF"
+                    shadowColor="#999"
+                    bgColor="#fff"
+                    outerCircleStyle={{alignSelf: 'flex-end'}}>
+                    <Text style={{fontSize: 18}}>{'30%\nLeft'}</Text>
+                  </ProgressCircle>
+                </View>
+                <View style={{marginBottom: 10, padding: 20}}>
+                  <Text
+                    style={{
+                      fontWeight: '400',
+                      fontSize: 20,
+                      color: theme.colors.primary,
+                      marginBottom: 5,
+                    }}>
+                    Data Plan Total: 500 MB
+                  </Text>
+                  <Text
+                    style={{
+                      fontWeight: '400',
+                      color: theme.colors.warning,
+                      fontSize: 20,
+                    }}>
+                    Data Volume Used: 498 MB
+                  </Text>
+                </View>
+                <Button
+                  title="Restrict Internet Access"
+                  type="outline"
+                  raised
+                  onPress={Platform.select({
+                    ios: () => {
+                      // ? inform user they need netguard
+                      Alert.alert(
+                        'Opening a third party app',
+                        'this app uses a third party app called NetGuard to restrict internet access, click OK to launch it',
+                        [
+                          {
+                            text: 'Launch NetGuard',
+                            onPress: () => {
+                              Linking.canOpenURL(url)
+                                .then(supported => {
+                                  if (!supported) {
+                                    console.log("Can't handle url: " + url);
+                                  } else {
+                                    return Linking.openURL(url);
+                                  }
+                                })
+                                .catch(err =>
+                                  console.error('An error occurred', err),
+                                );
+                            },
+                          },
+                        ],
+                      );
+                    },
+                    android: () => {
+                      // check if app is installed by package name
+                      IntentLauncher.isAppInstalled('eu.faircode.netguard')
+                        .then(result => {
+                          console.log('isAppInstalled yes');
+                          // ? inform user about using netguard
+                          Alert.alert(
+                            'Opening a third party app',
+                            'this app uses a third party app called NetGuard to restrict internet access, click OK to launch it',
+                            [
+                              {
+                                text: 'Launch NetGuard',
+                                onPress: () => {
+                                  IntentLauncher.startAppByPackageName(
+                                    'eu.faircode.netguard',
+                                  )
+                                    .then(() => {
+                                      console.log(
+                                        'startAppByPackageName started',
+                                      );
+                                    })
+                                    .catch(error =>
+                                      console.warn(
+                                        'startAppByPackageName: could not open',
+                                        error,
+                                      ),
+                                    );
+                                },
+                              },
+                            ],
+                            {cancelable: true},
+                          );
+                        })
+                        .catch(error => {
+                          console.warn('isAppInstalled: no', error);
+                          // ? inform user they need netguard
+                          Alert.alert(
+                            'Opening a third party app',
+                            'this app uses a third party app called NetGuard to restrict internet access, click OK to launch it',
+                            [
+                              {
+                                text: 'Launch NetGuard',
+                                onPress: () => {
+                                  Linking.canOpenURL(url)
+                                    .then(supported => {
+                                      if (!supported) {
+                                        console.log("Can't handle url: " + url);
+                                      } else {
+                                        return Linking.openURL(url);
+                                      }
+                                    })
+                                    .catch(err =>
+                                      console.error('An error occurred', err),
+                                    );
+                                },
+                              },
+                            ],
+                          );
+                        });
+                    },
+                  })}
+                />
+              </Card>
+              <Divider style={{marginTop: 15, marginHorizontal: 5}} />
 
-  //   // Get data usage of specific list of installed apps in current device
-  //   // Example: get data usage for Facebook, YouTube and WhatsApp.
-  //   // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later)
-  //   NativeModules.DataUsageModule.getDataUsageByApp(
-  //     {
-  //       packages: [
-  //         'com.facebook.katana',
-  //         'com.google.android.youtube',
-  //         'com.whatsapp',
-  //       ],
-  //       startDate: new Date(2017, 4, 22, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
-  //       endDate: new Date().getTime(),
-  //     },
-  //     (err, jsonArrayStr) => {
-  //       if (!err) {
-  //         var apps = JSON.parse(jsonArrayStr);
-  //         console.log(apps);
-  //         for (var i = 0; i < apps.length; i++) {
-  //           var app = apps[i];
-  //           console.log(
-  //             'App name: ' +
-  //               app.name +
-  //               '\n' +
-  //               'Package name: ' +
-  //               app.packageName +
-  //               '\n' +
-  //               'Received bytes: ' +
-  //               app.rx +
-  //               'bytes\n' +
-  //               'Transmitted bytes: ' +
-  //               app.tx +
-  //               'bytes\n' +
-  //               'Received MB: ' +
-  //               app.rxMb +
-  //               '\n' +
-  //               'Transmitted MB: ' +
-  //               app.txMb,
-  //           );
-  //         }
-  //       }
-  //     },
-  //   );
+              <Divider style={{marginTop: 15, marginHorizontal: 5}} />
+              <Card
+                title="Data Plan"
+                containerStyle={{borderColor: theme.colors.primary}}>
+                <ListItem
+                  title="Total Volume(MB):"
+                  rightTitle={context.dataPlanTotalVolume}
+                  subtitle=""
+                  bottomDivider
+                />
+                <ListItem
+                  title="Data Balance(MB):"
+                  subtitle=""
+                  rightTitle={context.dataPlanDataBalance}
+                  bottomDivider
+                />
+                <ListItem
+                  title="Data Cycle:"
+                  subtitle=""
+                  rightTitile={context.dataPlanCycleTimeOptions}
+                />
+                <ListItem />
+                <Button
+                  title="Edit data Plan"
+                  type="solid"
+                  raised
+                  onPress={() => this.props.navigation.navigate('Plan')}
+                />
+              </Card>
+              <Card
+                title="Usage Comparison"
+                containerStyle={{borderColor: theme.colors.success}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignContent: 'stretch',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Card title="from Device">
+                    <Text h3>234 MB</Text>
+                  </Card>
+                  <Card title="from Carrier">
+                    <Text h3>654 MB</Text>
+                  </Card>
+                </View>
+                <Card>
+                  <Text h2>45% Diffrence</Text>
+                  <Badge value={'43 MB Difference'} status="warning" />
+                </Card>
+              </Card>
+              <Card title="Current Cycle Usage">
+                {this.state.appsUsage.map((app, index) => (
+                  <ListItem
+                    key={index}
+                    leftAvatar={{
+                      source: {uri: `data:image/gif;base64,${app.icon}`},
+                      placeholderStyle: {backgroundColor: 'transparent'},
+                      overlayContainerStyle: {backgroundColor: 'transparent'},
+                      rounded: false,
+                    }}
+                    title={this.state.usageReady ? app.name : 'Loading...'}
+                    subtitle={
+                      this.state.usageReady
+                        ? `recieved: ${app.rxMb} sent: ${app.txMb}`
+                        : 'Loading...'
+                    }
+                    bottomDivider
+                  />
+                ))}
+              </Card>
+            </ScrollView>
+          );
+        }}
+      </AppContext.Consumer>
+    );
+  }
+}
 
-  //   // Check if app has permission to access data usage by apps
-  //   // This way will not ask for permissions (check only)
-  //   // If you pass "requestPermission": "true", then app will ask for permissions.
-  //   NativeModules.DataUsageModule.requestPermissions(
-  //     {requestPermission: 'false'},
-  //     // eslint-disable-next-line handle-callback-err
-  //     (err, result) => {
-  //       var permissionObj = JSON.parse(result);
-  //       if (!permissionObj.permissions) {
-  //         Alert.alert(
-  //           'Give Permission',
-  //           'You need to enable data usage access for this app. Please, enable it on the next screen.',
-  //           [
-  //             // {text: 'Cancel', style: 'cancel', onPress: () => Actions.pop()},
-  //             {
-  //               text: 'Give permission',
-  //               onPress: () => this.requestPermissions(),
-  //             },
-  //           ],
-  //           {cancelable: false},
-  //         );
-  //       }
-  //     },
-  //   );
-  // }
-  const url = 'http://www.netguard.me/';
-  return (
-    <ScrollView>
-      <Card containerStyle={{margin: 5}}>
-        <View
-          style={{
-            marginBottom: 15,
-            paddingHorizontal: 25,
-          }}>
-          <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-            <Text h1 h1Style={{fontSize: 80, color: '#1565C0'}}>
-              132
-            </Text>
-            <View style={{flexDirection: 'column'}}>
-              <Text h1> MB </Text>
-              <Text h2> Left</Text>
-            </View>
-          </View>
-        </View>
-        <View style={{marginBottom: 10, padding: 25}}>
-          <Text h4 style={{marginBottom: 5}}>
-            Total Plan: 500 MB
-          </Text>
-          <Text h4>Data Used: 500 MB</Text>
-        </View>
-        <Button
-          title="Restrict Internet Access"
-          type="outline"
-          raised
-          onPress={() => {
-            Linking.canOpenURL(url)
-              .then(supported => {
-                if (!supported) {
-                  console.log("Can't handle url: " + url);
-                } else {
-                  return Linking.openURL(url);
-                }
-              })
-              .catch(err => console.error('An error occurred', err));
-          }}
-        />
-      </Card>
-      <Divider style={{marginTop: 15, marginHorizontal: 5}} />
-      <Card wrapperStyle={{justifyContent: 'center', height: 300}}>
-        <VictoryPie
-          containerComponent={<VictoryContainer responsive />}
-          theme={VictoryTheme.grayscale}
-          data={[
-            {x: '', y: 40},
-            {x: '', y: 60},
-            {x: '', y: 60},
-            {x: '', y: 60},
-            {x: '', y: 60},
-          ]}
-          labels={() => {
-            null;
-          }}
-        />
-      </Card>
-
-      <Divider style={{marginTop: 15, marginHorizontal: 5}} />
-      <View>
-        {apps.map((item, index) => (
-          <ListItem
-            key={index}
-            leftAvatar={{title: 'MD'}}
-            title={item.appName}
-            subtitle={`${item.usage} MB`}
-            bottomDivider
-          />
-        ))}
-      </View>
-    </ScrollView>
-  );
-};
-
-export default DataManager;
+export default withTheme(DataManager);
