@@ -13,7 +13,7 @@
     "@react-native-community/async-storage": "^1.6.2",
     "@react-native-community/datetimepicker": "^2.1.0",
     "@react-native-community/netinfo": "^4.4.0",
-    "mathjs": "^3.9.3",
+    "mathjs": "^3.17.0",
     "moment": "^2.24.0",
     "react": "16.9.0",
     "react-native": "0.60.0",
