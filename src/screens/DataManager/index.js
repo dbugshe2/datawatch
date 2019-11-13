@@ -21,40 +21,52 @@ import {
   ListItem,
   withTheme,
   Badge,
+  ButtonGroup,
 } from 'react-native-elements';
 import {AppContext} from '../../context/AppContext';
-import {bytesToGB} from '../../common/utility';
+import {bytesToGB, bytesToMB} from '../../common/utility';
 import DataPlan from '../DataPlan/index';
 
 class DataManager extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      appsUsage: [{name: '', tx: 0, rx: 0, txMb: '', rxMb: '', icon: ''}],
+      appsUsage: [
+        {
+          name: '',
+          tx: 0,
+          rx: 0,
+          txMb: '',
+          rxMb: '',
+          icon: '',
+        },
+      ],
       usageReady: false,
-      totalUsage: 0.0,
+      // totalUsage: 0.0,
     };
   }
   componentDidMount() {
-    if (NativeModules.DataUsageModule) {
-      // Get data usage of all installed apps in current device
-      // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
-      NativeModules.DataUsageModule.listDataUsageByApps(
-        {
-          startDate: new Date(2019, 10, 22, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
-          endDate: new Date().getTime(),
-        },
-        (err, jsonArrayStr) => {
-          if (!err) {
-            var apps = JSON.parse(jsonArrayStr);
-            this.setState({
-              appsUsage: apps,
-              usageReady: true,
-            });
-          }
-        },
-      );
-    } // end of data usage
+    // if (NativeModules.DataUsageModule) {
+    // Get data usage of all installed apps in current device
+    // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
+    NativeModules.DataUsageModule.listDataUsageByApps(
+      {
+        startDate: new Date(2019, 11, 3, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+        endDate: new Date().getTime(),
+      },
+      (err, jsonArrayStr) => {
+        if (!err) {
+          var apps = JSON.parse(jsonArrayStr);
+          this.setState({
+            appsUsage: apps,
+            usageReady: true,
+          });
+        } else {
+          console.error(err);
+        }
+      },
+    );
+    // } // end of data usage
   }
   getTotalUsage = () => {
     let totalUsage = this.state.appsUsage
@@ -64,7 +76,7 @@ class DataManager extends React.Component {
       .reduce((acc, appTotalBytes) => {
         return acc + appTotalBytes;
       }, 0);
-    return bytesToGB(totalUsage);
+    return bytesToMB(totalUsage);
   };
   render() {
     // this app relies on netguard to restrict the internet connection of other appps
@@ -77,47 +89,37 @@ class DataManager extends React.Component {
           return (
             <ScrollView>
               <Card title="Device Data Usage" containerStyle={{margin: 5}}>
+                <ButtonGroup
+                  onPress={index => context.updateCycleTimeIndex(index)}
+                  selectedIndex={context.dataPlanSelectedCycleIndex}
+                  buttons={context.dataPlanCycleTimeOptions}
+                  containerStyle={{height: 40}}
+                />
                 <View
                   style={{
                     marginBottom: 8,
                     paddingHorizontal: 10,
-                    justifyContent: 'space-between',
+                    justifyContent: 'center',
                     flexDirection: 'row',
                   }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignContent: 'flex-end',
-                    }}>
-                    {this.state.usageReady ? (
-                      <Text h1 h1Style={{fontSize: 40, color: '#1565C0'}}>
-                        {this.getTotalUsage()}
-                      </Text>
-                    ) : (
-                      <ActivityIndicator
-                        style={{marginRight: 40}}
-                        size="large"
-                        color="#0000ff"
-                      />
-                    )}
-                    <View style={{flexDirection: 'column'}}>
-                      <Text h2> GB </Text>
-                      <Text h3> Left</Text>
-                    </View>
+                  {this.state.usageReady ? (
+                    <Text h1 h1Style={{fontSize: 60, color: '#1565C0'}}>
+                      {this.getTotalUsage()}
+                      {/* 0.91 */}
+                    </Text>
+                  ) : (
+                    <ActivityIndicator
+                      style={{marginRight: 60}}
+                      size="large"
+                      color="#0000ff"
+                    />
+                  )}
+                  <View style={{flexDirection: 'column'}}>
+                    <Text h2> MB </Text>
+                    <Text h3> Used</Text>
                   </View>
-                  <ProgressCircle
-                    percent={40}
-                    radius={50}
-                    borderWidth={8}
-                    color="#3399FF"
-                    shadowColor="#999"
-                    bgColor="#fff"
-                    outerCircleStyle={{alignSelf: 'flex-end'}}>
-                    <Text style={{fontSize: 18}}>{'30%\nLeft'}</Text>
-                  </ProgressCircle>
                 </View>
-                <View style={{marginBottom: 10, padding: 20}}>
+                <View style={{marginVertical: 10, padding: 20}}>
                   <Text
                     style={{
                       fontWeight: '400',
@@ -125,7 +127,7 @@ class DataManager extends React.Component {
                       color: theme.colors.primary,
                       marginBottom: 5,
                     }}>
-                    Data Plan Total: 500 MB
+                    Start Date: {new Date().toLocaleDateString()}
                   </Text>
                   <Text
                     style={{
@@ -133,7 +135,7 @@ class DataManager extends React.Component {
                       color: theme.colors.warning,
                       fontSize: 20,
                     }}>
-                    Data Volume Used: 498 MB
+                    End Date: {new Date().toLocaleDateString()}
                   </Text>
                 </View>
                 <Button
@@ -232,7 +234,7 @@ class DataManager extends React.Component {
               <Divider style={{marginTop: 15, marginHorizontal: 5}} />
 
               <Divider style={{marginTop: 15, marginHorizontal: 5}} />
-              <Card
+              {/* <Card
                 title="Data Plan"
                 containerStyle={{borderColor: theme.colors.primary}}>
                 <ListItem
@@ -260,28 +262,8 @@ class DataManager extends React.Component {
                   onPress={() => this.props.navigation.navigate('Plan')}
                 />
               </Card>
-              <Card
-                title="Usage Comparison"
-                containerStyle={{borderColor: theme.colors.success}}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignContent: 'stretch',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
-                  <Card title="from Device">
-                    <Text h3>234 MB</Text>
-                  </Card>
-                  <Card title="from Carrier">
-                    <Text h3>654 MB</Text>
-                  </Card>
-                </View>
-                <Card>
-                  <Text h2>45% Diffrence</Text>
-                  <Badge value={'43 MB Difference'} status="warning" />
-                </Card>
-              </Card>
+               */}
+
               <Card title="Current Cycle Usage">
                 {this.state.appsUsage.map((app, index) => (
                   <ListItem

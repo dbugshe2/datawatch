@@ -19,7 +19,7 @@ export default class AppContextProvider extends Component {
       dataPlanDataBalance: '', //updating
       dataPlanSelectedNetworkIndex: 0, //updating
       dataPlanNetworkOptions: ['Airtel', 'GLO', 'MTN', '9Mobile'],
-      dataPlanSelectedCycleIndex: 0, // updating
+      dataPlanSelectedCycleIndex: 2, // updating
       dataPlanCycleTimeOptions: ['1 Month', '1 Week', '1 Day'],
       DeviceUsage: {},
       checkBalCodes: [
@@ -68,7 +68,7 @@ export default class AppContextProvider extends Component {
   };
 
   async componentDidMount() {
-    this.retrieveAppState();
+    // this.retrieveAppState();
     // this.retrieveDP();
   }
   componentDidUpdate() {}

@@ -20,7 +20,7 @@ const DataPlanStack = createStackNavigator({
   DataPlanScreen: {
     screen: DataPlan,
     navigationOptions: {
-      title: 'Set Data Plan',
+      title: 'Perform A download test',
     },
   },
 });
@@ -47,7 +47,7 @@ const App = createMaterialBottomTabNavigator(
     Plan: {
       screen: DataPlanStack,
       navigationOptions: {
-        tabBarLabel: 'Plan',
+        tabBarLabel: 'Test',
         tabBarIcon: ({tintColor}) => {
           return <Ionicon name={'ios-wallet'} size={25} color={tintColor} />;
         },
@@ -66,7 +66,7 @@ const App = createMaterialBottomTabNavigator(
     },
   },
   {
-    initialRouteName: 'Home',
+    initialRouteName: 'Plan',
     barStyle: {backgroundColor: '#1565C0'},
   },
 );
