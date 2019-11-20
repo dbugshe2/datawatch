@@ -1,207 +1,171 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 
-import {ScrollView, NativeModules, View, Alert} from 'react-native';
-import {
-  Text,
-  ButtonGroup,
-  Card,
-  Input,
-  Button,
-  withTheme,
-  ListItem,
-  Divider,
-  Badge,
-} from 'react-native-elements';
+import {View, Alert} from 'react-native';
+import {Button, withTheme} from 'react-native-elements';
 import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../../context/AppContext';
 import ViewPager from '@react-native-community/viewpager';
-import ProgressCircle from 'react-native-progress-circle';
+import StepIndicator from 'react-native-step-indicator';
+// import downloadManager from 'react-native-simple-download-manager';
+
 import styles from './styles';
+import DataBalance from '../../components/DataBalance';
+import DownloadSelect from '../../components/DownloadSelect';
+import Download from '../../components/Download';
+import UsageComparison from '../../components/UsageComparison';
 class DataPlan extends React.Component {
+  // static contextType = AppContext;
+
   constructor(props) {
     super(props);
     this.state = {
-      fileIndex: 1,
+      currentPage: 0,
     };
+    this.onStepPress = this.onStepPress.bind(this);
   }
+  onStepPress = page => {
+    this.setState({currentPage: page});
+    this.viewPager.setPage(page);
+  };
 
+  componentWillReceiveProps(nextProps, nextState) {
+    if (nextState.currentPage !== this.state.currentPage) {
+      if (this.viewPager) {
+        this.viewPager.setPage(nextState.currentPage);
+      }
+    }
+  }
   render() {
     const theme = this.props.theme;
     const endOfTest = () => {
+      this.setState({currentPage: 0});
       this.viewPager.setPage(0);
     };
     return (
       <AppContext.Consumer>
         {context => {
+          console.log('context is:', context);
           return (
-            <ViewPager
-              initialPage={0}
-              scrollEnabled={true}
-              keyboardDismissMode="on-drag"
-              style={{flex: 1}}
-              ref={viewPager => {
-                this.viewPager = viewPager;
-              }}>
-              <View key="0" style={styles.container}>
-                <Card title="Input Current Data Plan">
-                  <ButtonGroup
-                    onPress={index => context.updateNetworkIndex(index)}
-                    selectedIndex={context.selectedNetworkIndex}
-                    buttons={context.networkOptions}
-                    containerStyle={{height: 40, marginVertical: 15}}
-                  />
-
-                  <Input
-                    placeholder="Data Balance"
-                    leftIcon={
-                      <Evilicon name="close" size={25} color="#1565C0" />
-                    }
-                    label="Data Balance (MB):"
-                    keyboardType="numeric"
-                    containerStyle={{marginVertical: 15}}
-                    onChangeText={text =>
-                      context.handleDPDataBalanceChange(text)
-                    }
-                    returnKeyType="done"
-                  />
-                  <Button title="Check Data Balance" type="outline" />
-                </Card>
-                <Button
-                  title="Done"
-                  iconRight
-                  buttonStyle={{
-                    backgroundColor: theme.colors.success,
-                    borderRadius: 0,
-                    padding: 10,
-                  }}
-                  icon={<Evilicon name="arrow-right" size={32} color="white" />}
-                  onPress={() => this.viewPager.setPage(1)}
+            <View style={{flex: 1}}>
+              <View>
+                <StepIndicator
+                  stepCount={5}
+                  currentPosition={this.state.currentPage}
+                  labels={[
+                    'Balance',
+                    'Select Download',
+                    'Download',
+                    'Balance',
+                    'Result',
+                  ]}
+                  onPress={null}
+                  style={{padding: 10}}
                 />
               </View>
-              <View key="1" style={styles.container}>
-                <Card title="Download a Test File">
-                  <ButtonGroup
-                    onPress={index => context.updateDownloadFileIndex(index)}
-                    selectedIndex={context.downloadFileIndex}
-                    buttons={context.downloadFileOptions}
-                    containerStyle={{height: 40, marginVertical: 15}}
-                  />
+              <ViewPager
+                style={{flexGrow: 1}}
+                initialPage={0}
+                scrollEnabled={false}
+                keyboardDismissMode="on-drag"
+                ref={viewPager => {
+                  this.viewPager = viewPager;
+                }}>
+                <View key="0" style={styles.container}>
+                  <DataBalance initial />
                   <Button
-                    title="Start Download"
+                    title="Done"
+                    iconRight
                     buttonStyle={{
-                      padding: 10,
-                      margin: 12,
                       backgroundColor: theme.colors.success,
+                      borderRadius: 0,
+                      padding: 10,
+                    }}
+                    icon={
+                      <Evilicon name="arrow-right" size={32} color="white" />
+                    }
+                    onPress={() => this.onStepPress(1)}
+                  />
+                </View>
+                <View key="1" style={styles.container}>
+                  <DownloadSelect />
+                  <Button
+                    disabled={context.isDownloadClicked}
+                    title="Start Download"
+                    iconRight
+                    buttonStyle={{
+                      backgroundColor: theme.colors.success,
+                      borderRadius: 0,
+                      padding: 10,
+                    }}
+                    icon={
+                      <Evilicon name="arrow-right" size={32} color="white" />
+                    }
+                    onPress={() => {
+                      this.onStepPress(2);
+                      context.handleDownloadFile();
                     }}
                   />
-                </Card>
-                <Button
-                  title="Done"
-                  iconRight
-                  buttonStyle={{
-                    backgroundColor: theme.colors.success,
-                    borderRadius: 0,
-                    padding: 10,
-                  }}
-                  icon={<Evilicon name="arrow-right" size={32} color="white" />}
-                  onPress={() => this.viewPager.setPage(2)}
-                />
-              </View>
-              <View key="2" style={styles.container}>
-                <Card
-                  title="Download in progress"
-                  containerStyle={{
-                    marginVertical: 10,
-                  }}
-                  wrapperStyle={{
-                    marginBottom: 10,
-                    flexDirection: 'row',
-                    alignContent: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <ProgressCircle
-                    percent={60}
-                    radius={100}
-                    borderWidth={9}
-                    color="#3399FF"
-                    shadowColor="#999"
-                    bgColor="#fff">
-                    <Text style={{fontSize: 22}}>{'60% complete'}</Text>
-                  </ProgressCircle>
-                </Card>
-                <Button
-                  title="Done"
-                  iconRight
-                  buttonStyle={{
-                    backgroundColor: theme.colors.success,
-                    borderRadius: 0,
-                    padding: 10,
-                  }}
-                  onPress={() => this.viewPager.setPage(3)}
-                  icon={<Evilicon name="arrow-right" size={32} color="white" />}
-                />
-              </View>
-              <View key="3" style={styles.container}>
-                <Card title="Input Data Balance Again">
-                  <Input
-                    placeholder="Data Balance"
-                    leftIcon={
-                      <Evilicon name="close" size={25} color="#1565C0" />
+                </View>
+                <View key="2" style={styles.container}>
+                  <Download />
+                  <Button
+                    disabled={!context.isDownloadComplete}
+                    title="Done"
+                    iconRight
+                    buttonStyle={{
+                      backgroundColor: theme.colors.success,
+                      borderRadius: 0,
+                      padding: 10,
+                    }}
+                    onPress={() => {
+                      this.onStepPress(3);
+                    }}
+                    icon={
+                      <Evilicon name="arrow-right" size={32} color="white" />
                     }
-                    label="Data Balance (MB):"
-                    keyboardType="numeric"
-                    containerStyle={{marginVertical: 15}}
-                    onChangeText={text =>
-                      context.updateDataUsageFinalBalance(text)
-                    }
-                    returnKeyType="done"
                   />
-                  <Button title="Check Data Balance" type="outline" />
-                </Card>
-                <Button
-                  title="Done"
-                  iconRight
-                  buttonStyle={{
-                    backgroundColor: theme.colors.success,
-                    borderRadius: 0,
-                    padding: 10,
-                  }}
-                  onPress={() => this.viewPager.setPage(4)}
-                  icon={<Evilicon name="arrow-right" size={32} color="white" />}
-                />
-              </View>
-              <View key="4" style={styles.container}>
-                <Card
-                  title="Usage Comparison"
-                  containerStyle={{borderColor: theme.colors.success}}
-                  wrapperStyle={{
-                    marginBottom: 10,
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignContent: 'stretch',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                    <Card title="from Device">
-                      <Text h3>3 MB</Text>
-                    </Card>
-                    <Card title="from Carrier">
-                      <Text h3>4 MB</Text>
-                    </Card>
-                  </View>
-                  <Card>
-                    <Text h3>28.6% Diffrence</Text>
-                    <Badge value={'1 MB Difference'} status="warning" />
-                  </Card>
-                </Card>
-                <Button title="Start over" onPress={() => endOfTest()} />
-              </View>
-            </ViewPager>
+                </View>
+                <View key="3" style={styles.container}>
+                  <DataBalance />
+                  <Button
+                    title="Done"
+                    iconRight
+                    buttonStyle={{
+                      backgroundColor: theme.colors.success,
+                      borderRadius: 0,
+                      padding: 10,
+                    }}
+                    onPress={() => {
+                      this.onStepPress(4);
+                      context.handleUsageComparison();
+                    }}
+                    icon={
+                      <Evilicon name="arrow-right" size={32} color="white" />
+                    }
+                  />
+                </View>
+                <View key="4" style={styles.container}>
+                  <UsageComparison />
+                  <Button
+                    buttonStyle={{
+                      padding: 10,
+                      borderRadius: 0,
+                      margin: 10,
+                    }}
+                    title="Start over"
+                    iconRight
+                    raised
+                    icon={<Evilicon name="check" size={32} color="white" />}
+                    onPress={() => {
+                      context.handleStartOver();
+                      this.onStepPress(0);
+                    }}
+                  />
+                </View>
+              </ViewPager>
+            </View>
           );
-          /* console.log('context is', context); */
         }}
       </AppContext.Consumer>
     );

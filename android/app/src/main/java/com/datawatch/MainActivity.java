@@ -110,19 +110,19 @@ public class MainActivity extends ReactActivity {
         // end of data usage section
 
         // immediate phone call section
-        // @Override
-        // public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        //         RNImmediatePhoneCallPackage.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        //         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // }
+        @Override
+        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+                RNImmediatePhoneCallPackage.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
 
-//        @Override
-//        protected ReactActivityDelegate createReactActivityDelegate() {
-//                return new ReactActivityDelegate(this, getMainComponentName()) {
-//                        @Override
-//                        protected ReactRootView createRootView() {
-//                                return new RNGestureHandlerEnabledRootView(MainActivity.this);
-//                        }
-//                };
-//        }
+//       @Override
+//       protected ReactActivityDelegate createReactActivityDelegate() {
+//               return new ReactActivityDelegate(this, getMainComponentName()) {
+//                       @Override
+//                       protected ReactRootView createRootView() {
+//                               return new RNGestureHandlerEnabledRootView(MainActivity.this);
+//                       }
+//               };
+//       }
 }

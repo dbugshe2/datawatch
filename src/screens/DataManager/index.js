@@ -29,8 +29,66 @@ import {bytesToGB, bytesToMB} from '../../common/utility';
 class DataManager extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      // ? device usage related state (Home Screen)
+      deviceUsageStartTime: new Date().getTime(),
+      deviceUsageCycleOptions: ['1 Month', '1 Week', '1 Day'],
+      deviceUsageCycleIndex: 2, // updating
+      appsUsage: [
+        {
+          name: '',
+          tx: 0,
+          rx: 0,
+          txMb: '',
+          rxMb: '',
+          icon: '',
+          total: '',
+        },
+      ],
+      deviceUsageReady: false,
+      deviceTotalUsage: 0.0,
+    };
   }
+  // ? usage period used to display data usage on home screen
+  updateUsageCycleIndex = selectedIndex => {
+    this.setState({deviceUsageCycleIndex: selectedIndex});
+  };
+
+  updateAppsUsage = () => {
+    this.setState({usageReady: false});
+    // if (NativeModules.DataUsageModule) {
+    // Get data usage of all installed apps in current device
+    // Parameters "startDate" and "endDate" are optional (works only with Android 6.0 or later). Declare empty object {} for no date filter.
+    NativeModules.DataUsageModule.listDataUsageByApps(
+      {
+        startDate: new Date(2019, 11, 3, 0, 0, 0, 0).getTime(), // 1495422000000 = Mon May 22 2017 00:00:00
+        endDate: new Date().getTime(),
+      },
+      (err, jsonArrayStr) => {
+        if (!err) {
+          var apps = JSON.parse(jsonArrayStr);
+          this.setState({
+            appsUsage: apps,
+            usageReady: true,
+          });
+        } else {
+          console.error(err);
+        }
+      },
+    );
+    // } // end of data usage
+  };
+
+  updateDeviceTotalUsage = () => {
+    let totalUsage = this.state.appsUsage
+      .map(app => {
+        return app.total;
+      })
+      .reduce((acc, appTotalBytes) => {
+        return acc + appTotalBytes;
+      }, 0);
+    return bytesToMB(totalUsage);
+  };
 
   render() {
     // this app relies on netguard to restrict the internet connection of other appps
@@ -44,9 +102,9 @@ class DataManager extends React.Component {
             <ScrollView>
               <Card title="Device Data Usage" containerStyle={{margin: 5}}>
                 <ButtonGroup
-                  onPress={index => context.updateUsageCycleIndex(index)}
-                  selectedIndex={context.deviceUsageCycleIndex}
-                  buttons={context.deviceUsageCycleOptions}
+                  onPress={index => this.updateUsageCycleIndex(index)}
+                  selectedIndex={this.state.deviceUsageCycleIndex}
+                  buttons={this.state.deviceUsageCycleOptions}
                   containerStyle={{height: 40}}
                 />
                 <View
@@ -56,7 +114,7 @@ class DataManager extends React.Component {
                     justifyContent: 'center',
                     flexDirection: 'row',
                   }}>
-                  {context.deviceUsageReady ? (
+                  {this.state.deviceUsageReady ? (
                     <Text h1 h1Style={{fontSize: 60, color: '#1565C0'}}>
                       {this.getTotalUsage()}
                       {/* 0.91 */}
@@ -190,7 +248,7 @@ class DataManager extends React.Component {
               <Divider style={{marginTop: 15, marginHorizontal: 5}} />
 
               <Card title="Current Cycle Usage">
-                {context.appsUsage.map((app, index) => (
+                {this.state.appsUsage.map((app, index) => (
                   <ListItem
                     key={index}
                     leftAvatar={{
@@ -199,9 +257,9 @@ class DataManager extends React.Component {
                       overlayContainerStyle: {backgroundColor: 'transparent'},
                       rounded: false,
                     }}
-                    title={context.usageReady ? app.name : 'Loading...'}
+                    title={this.state.usageReady ? app.name : 'Loading...'}
                     subtitle={
-                      context.deviceusageReady
+                      this.state.deviceusageReady
                         ? `recieved: ${app.rxMb} sent: ${app.txMb}`
                         : 'Loading...'
                     }
