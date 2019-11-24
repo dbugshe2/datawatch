@@ -32,6 +32,7 @@ class DataManager extends React.Component {
     this.state = {
       // ? device usage related state (Home Screen)
       deviceUsageStartTime: new Date().getTime(),
+      deviceUsageEndTime: new Date().getTime(),
       deviceUsageCycleOptions: ['1 Month', '1 Week', '1 Day'],
       deviceUsageCycleIndex: 2, // updating
       appsUsage: [
@@ -89,7 +90,9 @@ class DataManager extends React.Component {
       }, 0);
     return bytesToMB(totalUsage);
   };
-
+  updateDeviceUsageEndTime = () => {
+    // TODO write code to generate a time based on selected index
+  };
   render() {
     // this app relies on netguard to restrict the internet connection of other appps
     const url =
