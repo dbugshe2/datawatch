@@ -66,7 +66,7 @@ const App = createMaterialBottomTabNavigator(
     },
   },
   {
-    initialRouteName: 'Plan',
+    initialRouteName: 'Home',
     barStyle: {backgroundColor: '#1565C0'},
   },
 );

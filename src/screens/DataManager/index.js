@@ -52,17 +52,14 @@ class DataManager extends React.Component {
 
   updateUsageStartTime = () => {
     try {
-      this.setState(
-        {
-          usageStartTime: new moment(this.state.usageEndTime)
-            .subtract(
-              1,
-              this.state.usageCycleValues[this.state.currentCycleIndex],
-            )
-            .valueOf(),
-        },
-        console.log(this.state.usageStartTime),
-      );
+      this.setState({
+        usageStartTime: new moment(this.state.usageEndTime)
+          .subtract(
+            1,
+            this.state.usageCycleValues[this.state.currentCycleIndex],
+          )
+          .valueOf(),
+      });
     } catch (error) {
       Sentry.captureException(error);
     }
@@ -76,11 +73,7 @@ class DataManager extends React.Component {
     if (this.state.totalUsage <= 0) {
       this.setState({usageReady: false});
     }
-    console.log(
-      'asd man end then start' +
-        this.state.usageEndTime +
-        this.state.usageStartTime,
-    );
+
     if (NativeModules.DataUsageModule) {
       NativeModules.DataUsageModule.listDataUsageByApps(
         {
@@ -126,10 +119,6 @@ class DataManager extends React.Component {
       this.updateAppsUsage();
     });
   };
-  didFocusHandler = this.props.navigation.addListener('didFocus', payload => {
-    console.log('focus to DU screen');
-    // this.updateAppsUsage();
-  });
   componentDidMount() {
     this.updateUsageStartTime();
     this.updateAppsUsage();
@@ -139,7 +128,6 @@ class DataManager extends React.Component {
     const url =
       'https://play.google.com/store/apps/details?id=eu.faircode.netguard';
     const theme = this.props.theme;
-    console.log(this.state);
     return (
       <ScrollView>
         <Card title="Device Data Usage" containerStyle={{margin: 5}}>
@@ -217,7 +205,6 @@ class DataManager extends React.Component {
                         Linking.canOpenURL(url)
                           .then(supported => {
                             if (!supported) {
-                              console.log("Can't handle url: " + url);
                             } else {
                               return Linking.openURL(url);
                             }

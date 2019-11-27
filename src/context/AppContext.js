@@ -4,6 +4,7 @@ import {NativeModules, Alert, PermissionsAndroid, Platform} from 'react-native';
 import {bytesToMB, mbToBytes} from '../common/utility';
 import RNImmediatePhoneCall from 'react-native-immediate-phone-call';
 import RNRestart from 'react-native-restart';
+import AsyncStorage from '@react-native-community/async-storage';
 import RNFS from 'react-native-fs';
 import moment from 'moment';
 import * as Sentry from '@sentry/react-native';
@@ -56,6 +57,9 @@ export default class AppContextProvider extends Component {
       ipaddress: null,
       loadingDeviceInfo: true,
       loadingNetInfo: true,
+      availabilityTime: 0,
+      isAvailable: true,
+      loadingAvailability: true,
     };
   }
   getAllDeviceInfo = async () => {
@@ -168,10 +172,16 @@ export default class AppContextProvider extends Component {
         Sentry.captureException(err);
       });
   };
-  downloadbegin = data => {
+  downloadbegin = async data => {
     try {
-      this.setState({isDownloadBegin: true});
-      console.log(data);
+      this.setState({isDownloadBegin: true, isAvailable: false});
+      const availability = {
+        time: new moment().add(28, 'hours').valueOf(),
+      };
+      await AsyncStorage.setItem(
+        '@availabilityTime',
+        JSON.stringify(availability),
+      );
     } catch (err) {
       Sentry.captureException(err);
     }
@@ -259,10 +269,33 @@ export default class AppContextProvider extends Component {
   updateNetworkIndex = selectedIndex => {
     this.setState({selectedNetworkIndex: selectedIndex});
   };
-
+  checkAvailability = () => {
+    this.setState({loadingAvailability: true});
+    const val = new moment().valueOf();
+    console.log(val);
+    const result = new moment(this.state.availabilityTime).isBefore(val);
+    console.log('result of check avaulability was: ', result);
+    this.setState({isAvailable: result, loadingAvailability: false});
+  };
+  setAvailability = async () => {
+    try {
+      this.setState({loadingAvailability: true});
+      let availability = await AsyncStorage.getItem('@availabilitytime');
+      if (availability !== null) {
+        availability = JSON.parse(availability);
+        this.setState({
+          availabilityTime: availability.time,
+          loadingAvailability: false,
+        });
+      }
+    } catch (error) {
+      Sentry.captureException(error);
+    }
+  };
   // ? Did Mount
   async componentDidMount() {
     //#region
+    console.log('running mount context', {...this.state});
     if (NativeModules.DataUsageModule) {
       // Check if app has permission to access data usage by apps
       // This way will not ask for permissions (check only)
@@ -301,9 +334,11 @@ export default class AppContextProvider extends Component {
     }
     this.getAllDeviceInfo();
     this.getAllNetInfo();
-    //#endregion
-  }
+    this.setAvailability();
 
+    //#endregion
+    // 1574846755471
+  }
   render() {
     return (
       <AppContext.Provider
@@ -322,6 +357,7 @@ export default class AppContextProvider extends Component {
           deleteDownload: this.deleteDownload,
           handleStartOver: this.handleStartOver,
           handleUsageComparison: this.handleUsageComparison,
+          checkAvailability: this.checkAvailability,
         }}>
         {this.props.children}
       </AppContext.Provider>

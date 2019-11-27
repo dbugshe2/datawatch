@@ -2,18 +2,18 @@
 import React from 'react';
 
 import {View, Alert} from 'react-native';
-import {Button, withTheme, Overlay, Text} from 'react-native-elements';
+import {Button, withTheme} from 'react-native-elements';
 import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../../context/AppContext';
 import ViewPager from '@react-native-community/viewpager';
 import StepIndicator from 'react-native-step-indicator';
-// import downloadManager from 'react-native-simple-download-manager';
-
+import {NavigationEvents} from 'react-navigation';
 import styles from './styles';
 import DataBalance from '../../components/DataBalance';
 import DownloadSelect from '../../components/DownloadSelect';
 import Download from '../../components/Download';
 import UsageComparison from '../../components/UsageComparison';
+import moment from 'moment';
 class DataPlan extends React.Component {
   // static contextType = AppContext;
 
@@ -45,11 +45,12 @@ class DataPlan extends React.Component {
           console.log('context is:', context);
           return (
             <View style={{flex: 1}}>
-              <Overlay
-                isVisible={context.connectionType !== 'cellular'}
-              >
-                <Text>This is an Overlay</Text>
-            </Overlay>
+              {/* <NavigationEvents
+                onDidFocus={payload => {
+                  context.checkAvailability();
+                  console.log('ran checkavailbility', {...payload});
+                }}
+              /> */}
               <View>
                 <StepIndicator
                   stepCount={5}
@@ -88,15 +89,30 @@ class DataPlan extends React.Component {
                       <Evilicon name="arrow-right" size={32} color="white" />
                     }
                     onPress={() => {
-                      if (context.dataUsageInitialBalance === 0) {
-                        this.setState({
-                          errorMessage: 'Please enter data balance',
-                        });
+                      if (context.connectionType !== 'cellular') {
+                        Alert.alert(
+                          'please enable mobile data connection',
+                          'this test depends on mobile internet for propoer results',
+                        );
+                      } else if (!context.isAvailable) {
+                        Alert.alert(
+                          'Time Limit For Test Iteration',
+                          `Due OS limitaitons you can only perform one test within 28hrs:
+                          next test is available from ${new moment(
+                            context.availbilityTime,
+                          ).toNow()}`,
+                        );
                       } else {
-                        this.setState({
-                          errorMessage: '',
-                        });
-                        this.onStepPress(1);
+                        if (context.dataUsageInitialBalance === 0) {
+                          this.setState({
+                            errorMessage: 'Please enter data balance',
+                          });
+                        } else {
+                          this.setState({
+                            errorMessage: '',
+                          });
+                          this.onStepPress(1);
+                        }
                       }
                     }}
                   />
@@ -104,7 +120,9 @@ class DataPlan extends React.Component {
                 <View key="1" style={styles.container}>
                   <DownloadSelect />
                   <Button
-                    disabled={context.isDownloadClicked}
+                    disabled={
+                      context.isDownloadClicked && !context.internetReachable
+                    }
                     title="Start Download"
                     iconRight
                     buttonStyle={{
@@ -116,8 +134,15 @@ class DataPlan extends React.Component {
                       <Evilicon name="arrow-right" size={32} color="white" />
                     }
                     onPress={() => {
-                      this.onStepPress(2);
-                      context.handleDownloadFile();
+                      if (context.connectionType !== 'cellular') {
+                        Alert.alert(
+                          'please enable mobile data connection',
+                          'this test depends on mobile internet for propoer results',
+                        );
+                      } else {
+                        this.onStepPress(2);
+                        context.handleDownloadFile();
+                      }
                     }}
                   />
                 </View>
