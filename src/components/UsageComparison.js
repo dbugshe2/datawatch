@@ -2,7 +2,6 @@
 import React, {Component} from 'react';
 import {View, ActivityIndicator} from 'react-native';
 import {Button, Text, Card, Badge, withTheme} from 'react-native-elements';
-import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../context/AppContext';
 import {bytesToMB} from '../common/utility';
 
@@ -44,15 +43,16 @@ export class UsageComparison extends Component {
               <Card containerStyle={{margin: 0, alignItems: 'center'}}>
                 {context.testResultReady ? (
                   <Text h3>
-                    {context.dataUsageDiffVolumePercent}% Diffrence
+                    {parseFloat(context.dataUsageDiffVolumePercent).toFixed(0)}{' '}
+                    % Difference
                   </Text>
                 ) : (
                   <ActivityIndicator />
                 )}
                 {context.testResultReady ? (
                   <Badge
-                    value={`${parseFloat(context.dataUsageDiffVolume).toFixed(
-                      0,
+                    value={`${bytesToMB(
+                      context.dataUsageDiffVolume,
                     )} MB Difference`}
                     status="warning"
                   />

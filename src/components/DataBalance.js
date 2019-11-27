@@ -13,7 +13,6 @@ import {AppContext} from '../context/AppContext';
 
 export class DataBalance extends Component {
   render() {
-    const theme = this.props.theme;
     const {initial} = this.props;
     return (
       <AppContext.Consumer>
@@ -40,6 +39,8 @@ export class DataBalance extends Component {
                       : context.updateDataUsageFinalBalance(text)
                   }
                   returnKeyType="done"
+                  enablesReturnKeyAutomatically
+                  errorMessage={this.props.errMess}
                 />
                 <Button
                   title="Check Data Balance"
@@ -47,17 +48,6 @@ export class DataBalance extends Component {
                   onPress={() => context.handleCheckBal()}
                 />
               </Card>
-              {/* <Button
-                title="Done"
-                iconRight
-                buttonStyle={{
-                  backgroundColor: theme.colors.success,
-                  borderRadius: 0,
-                  padding: 10,
-                }}
-                icon={<Evilicon name="arrow-right" size={32} color="white" />}
-                onPress={() => this.onStepPress(1)}
-              /> */}
             </View>
           );
         }}

@@ -1,12 +1,18 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {Component, createContext} from 'react';
-import {NativeModules, Alert} from 'react-native';
-import {bytesToMB} from '../common/utility';
-import AsyncStorage from '@react-native-community/async-storage';
+import {NativeModules, Alert, PermissionsAndroid, Platform} from 'react-native';
+import {bytesToMB, mbToBytes} from '../common/utility';
 import RNImmediatePhoneCall from 'react-native-immediate-phone-call';
+import RNRestart from 'react-native-restart';
 import RNFS from 'react-native-fs';
-import {format, number, subtract, divide, abs, multiply, mean} from 'mathjs';
-import {mbToBytes} from '../common/utility';
+import moment from 'moment';
+import * as Sentry from '@sentry/react-native';
+import {
+  getBrand,
+  getSystemVersion,
+  getTotalMemory,
+} from 'react-native-device-info';
+import NetInfo from '@react-native-community/netinfo';
 
 const STORAGE_KEY = '@DW_GLOBAL_STATE_ALPHA_0';
 export const AppContext = createContext(); // creating the context for general app info
@@ -15,8 +21,8 @@ export default class AppContextProvider extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      dataUsageTestStart: null,
-      dataUsageTestEnd: null,
+      dataUsageTestStart: new moment().valueOf(),
+      dataUsageTestEnd: new moment().valueOf(),
       dataUsageTotalVolume: 0,
       dataUsageInitialBalance: 0,
       dataUsageFinalBalance: 0,
@@ -25,12 +31,13 @@ export default class AppContextProvider extends Component {
       isDownloadClicked: false,
       isDownloadBegin: false,
       isDownloadComplete: false,
-      downloadFileIndex: 1,
+      isDownloadStopped: false,
+      downloadFileIndex: 0,
       downloadFileOptions: ['5MB', '10MB', '20MB'],
       networkOptions: ['Airtel', 'GLO', 'MTN', '9Mobile'],
-      dataUsageDiffVolume: null,
-      dataUsageDiffVolumePercent: null,
-      dataDeviceUsageTotal: null,
+      dataUsageDiffVolume: 0,
+      dataUsageDiffVolumePercent: 0,
+      dataDeviceUsageTotal: 0,
       testResultReady: false,
       checkBalCodes: [
         {id: 0, carrier: 'airtel', code: '*140#'},
@@ -38,36 +45,85 @@ export default class AppContextProvider extends Component {
         {id: 2, carrier: 'mtn', code: '*559#'},
         {id: 3, carrier: '9mobile', code: '*228#'},
       ],
+      brand: null,
+      ram: null,
+      osVersion: null,
+      isConnected: null,
+      connectionType: null,
+      carrier: null,
+      cellularGen: null,
+      internetReachable: null,
+      ipaddress: null,
+      loadingDeviceInfo: true,
+      loadingNetInfo: true,
     };
-    this.updateDataUsageInitialBalance = this.updateDataUsageInitialBalance.bind(
-      this,
-    );
-    this.updateDataUsageFinalBalance = this.updateDataUsageFinalBalance.bind(
-      this,
-    );
-    // this.updateDataUsageTestEnd = this.updateDataUsageTestEnd(this);
-    // this.updateDataUsageTestStart = this.updateDataUsageTestStart(this);
-    this.downloadProgress = this.downloadProgress.bind(this);
-    this.downloadbegin = this.downloadbegin.bind(this);
   }
+  getAllDeviceInfo = async () => {
+    await Promise.all([getBrand(), getTotalMemory(), getSystemVersion()])
+      .then(result => {
+        this.setState({
+          brand: result[0],
+          ram: result[1],
+          osVersion: result[2],
+          loadingDeviceInfo: false,
+        });
+      })
+      .catch(err => {
+        Sentry.captureException(err);
+        this.setState({
+          loadingDeviceInfo: false,
+        });
+      });
+  };
+  getAllNetInfo = () => {
+    this.setState({loadingNetInfo: true});
+    return NetInfo.addEventListener(state => {
+      if (state.type !== 'none' && state.type !== 'unknown') {
+        // when there is a connection
+        state.type === 'cellular' || state.type === 'wifi'
+          ? this.setState({
+              isConnected: state.isConnected,
+              connectionType: state.type,
+              carrier: state.details.carrier,
+              cellularGen: state.details.cellularGeneration,
+              internetReachable: state.isInternetReachable,
+              ipaddress: state.details.ipAddress,
+              loadingNetInfo: false,
+            })
+          : this.setState({
+              connectionType: state.type,
+              loadingNetInfo: false,
+            });
+      } else {
+        this.setState({
+          connectionType: 'unavailable',
+          loadingNetInfo: false,
+        });
+      }
+    });
+  };
   // TODO Use moment in this date
   updateDataUsageTestStart = () => {
-    this.setState({dataUsageTestStart: new Date().getTime()});
+    this.setState({dataUsageTestStart: new moment().valueOf()});
   };
   // TODO Use moment in this date
   updateDataUsageTestEnd = () => {
-    this.setState({dataUsageTestEnd: new Date().getTime()});
+    this.setState({dataUsageTestEnd: new moment().valueOf()});
   };
   checkBal = code => {
     RNImmediatePhoneCall.immediatePhoneCall(code);
   };
   handleCheckBal = () => {
-    const getNetwork = this.state.checkBalCodes.filter(balCode => {
-      return balCode.id === this.state.selectedNetworkIndex;
-    });
-    console.log(getNetwork);
-    if (getNetwork.length) {
-      this.checkBal(getNetwork[0].code);
+    try {
+      const getNetwork = this.state.checkBalCodes.filter(balCode => {
+        return balCode.id === this.state.selectedNetworkIndex;
+      });
+      console.log(getNetwork);
+      if (getNetwork.length) {
+        this.checkBal(getNetwork[0].code);
+      }
+    } catch (error) {
+      Sentry.captureException(error);
     }
   };
   //  ? Downoad handlers
@@ -105,33 +161,42 @@ export default class AppContextProvider extends Component {
       .then(res => {
         downloadId = -1;
         this.updateDataUsageTestEnd();
+        console.log(res);
         this.setState({isDownloadComplete: true});
       })
       .catch(err => {
-        console.error('shit went down in download >>>', err);
+        Sentry.captureException(err);
       });
   };
   downloadbegin = data => {
     try {
       this.setState({isDownloadBegin: true});
+      console.log(data);
     } catch (err) {
-      console.error('Error in DonloadBegun: ', err);
+      Sentry.captureException(err);
     }
   };
   downloadProgress = data => {
     try {
+      console.log(data);
       const percentage = (100 * data.bytesWritten) / data.contentLength || 0;
       this.setState({downloadProgress: percentage});
     } catch (err) {
-      console.error('Error in download progress: ', err);
+      Sentry.captureException(err);
     }
   };
   deleteDownload = () => {};
   cancelDownload = () => {
-    if (downloadId !== -1) {
-      RNFS.stopDownload(downloadId);
-    } else {
-      this.setState({output: 'There is no download to stop'});
+    try {
+      if (downloadId !== -1) {
+        RNFS.stopDownload(downloadId);
+        downloadId = -1;
+        this.setState({isDownloadStopped: true});
+      } else {
+        Alert.alert('No Download Running');
+      }
+    } catch (error) {
+      // Sentry.captureException(error);
     }
   };
   handleUsageComparison = () => {
@@ -146,7 +211,7 @@ export default class AppContextProvider extends Component {
       },
       (err, jsonArrayStr) => {
         if (!err) {
-          var app = JSON.parse(jsonArrayStr);
+          const app = JSON.parse(jsonArrayStr);
           console.log(app);
           const appTotal = app[0].total;
           console.log('bout to run diff()');
@@ -162,18 +227,7 @@ export default class AppContextProvider extends Component {
       },
     );
   };
-  // percentUsageDiff = (Vue, Vop) => {
-  //   const VUE = number(Vue);
-  //   const VOP = number(Vop);
-  //   const VDelta = subtract(VUE, VOP);
-  //   const VDeltaAbs = abs(VDelta);
-  //   const VMean = mean(VUE, VOP);
-  //   const VDiff = divide(VDeltaAbs, VMean);
-  //   const VDiffPercent = multiply(VDiff, 100);
-  //   const resultDiff = format(VDelta);
-  //   const resultDiffPercent = format(VDiffPercent);
-  //   return {resultDiffPercent, resultDiff};
-  // };
+
   percentUsageDiff = (VUE, VOP) => {
     const VDelta = VUE - VOP;
     console.log('this is your VUE VOP', VUE, VOP);
@@ -187,28 +241,7 @@ export default class AppContextProvider extends Component {
     });
   };
   handleStartOver = () => {
-    this.setState({
-      dataUsageTestStart: null,
-      dataUsageTestEnd: null,
-      dataUsageTotalVolume: 0,
-      dataUsageInitialBalance: 0,
-      dataUsageFinalBalance: 0,
-      selectedNetworkIndex: 0,
-      downloadProgress: 0,
-      isDownloadClicked: false,
-      isDownloadBegin: false,
-      isDonwloadComplete: false,
-      downloadFileIndex: 1,
-      downloadFileOptions: ['5MB', '10MB', '20MB'],
-      networkOptions: ['Airtel', 'GLO', 'MTN', '9Mobile'],
-      checkBalCodes: [
-        {id: 0, carrier: 'airtel', code: '*140#'},
-        {id: 1, carrier: 'glo', code: '*127*0#'},
-        {id: 2, carrier: 'mtn', code: '*559#'},
-        {id: 3, carrier: '9mobile', code: '*228#'},
-      ],
-      // ? device usage related state (Home Screen)
-    });
+    RNRestart.Restart();
   };
   updateDataUsageTotalVolume = () => {
     const totalVolume =
@@ -227,30 +260,9 @@ export default class AppContextProvider extends Component {
     this.setState({selectedNetworkIndex: selectedIndex});
   };
 
-  retrieveAppState = async () => {
-    try {
-      let appState = await AsyncStorage.getItem(STORAGE_KEY);
-      if (appState !== null) {
-        let parsedAppState = JSON.parse(appState);
-        this.setState({...parsedAppState});
-      }
-    } catch (error) {
-      console.error('retrieveAppState faild: ', error);
-    }
-  };
-
-  saveAppState = async data => {
-    try {
-      return await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-      console.error(error);
-    }
-  };
   // ? Did Mount
   async componentDidMount() {
-    // this.retrieveAppState();
-    // this.retrieveDP();
-
+    //#region
     if (NativeModules.DataUsageModule) {
       // Check if app has permission to access data usage by apps
       // This way will not ask for permissions (check only)
@@ -278,11 +290,18 @@ export default class AppContextProvider extends Component {
         },
       );
     }
-  }
-
-  // ? Did Update
-  async componentDidUpdate() {
-    // this.saveAppState({...this.state});
+    // Other Permissions
+    if (Platform.OS === 'android') {
+      PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+    }
+    this.getAllDeviceInfo();
+    this.getAllNetInfo();
+    //#endregion
   }
 
   render() {
@@ -297,9 +316,6 @@ export default class AppContextProvider extends Component {
           updateDataUsageFinalBalance: this.updateDataUsageFinalBalance,
           updateDownloadFileIndex: this.updateDownloadFileIndex,
           updateNetworkIndex: this.updateNetworkIndex,
-          updateUsageCycleIndex: this.updateUsageCycleIndex,
-          updateAppsUsage: this.updateAppsUsage,
-          updateDeviceTotalUsage: this.updateDeviceTotalUsage,
           handleCheckBal: this.handleCheckBal,
           handleDownloadFile: this.handleDownloadFile,
           cancelDownload: this.cancelDownload,

@@ -8,10 +8,16 @@
 
 import React from 'react';
 
-import {YellowBox, PermissionsAndroid, Platform} from 'react-native';
+import {YellowBox} from 'react-native';
 import Navigator from './src/navigation/Navigator';
 import {ThemeProvider} from 'react-native-elements';
 import AppContextProvider from './src/context/AppContext';
+
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://15ef774899424f35ba3e142acd208947@sentry.io/1833934',
+});
 
 class App extends React.Component {
   constructor() {
@@ -20,17 +26,11 @@ class App extends React.Component {
       'Warning: componentWillMount is deprecated',
       'Warning: componentWillReceiveProps is deprecated',
     ]);
-    if (Platform.OS === 'android') {
-      PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
-        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ]);
-    }
+    // throw new Error('My first Sentry error!');
   }
 
   render() {
+    // Sentry.nativeCrash();
     return (
       <ThemeProvider>
         <AppContextProvider>

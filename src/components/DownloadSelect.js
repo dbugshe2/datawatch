@@ -2,12 +2,10 @@
 import React, {Component} from 'react';
 import {Text} from 'react-native';
 import {Card, ButtonGroup, Input, withTheme} from 'react-native-elements';
-// import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../context/AppContext';
 
 export class DownloadSelect extends Component {
   render() {
-    // const theme = this.props.theme;
     return (
       <AppContext.Consumer>
         {context => {

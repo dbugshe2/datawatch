@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {View, Alert} from 'react-native';
-import {Button, withTheme} from 'react-native-elements';
+import {Button, withTheme, Overlay, Text} from 'react-native-elements';
 import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../../context/AppContext';
 import ViewPager from '@react-native-community/viewpager';
@@ -21,6 +21,7 @@ class DataPlan extends React.Component {
     super(props);
     this.state = {
       currentPage: 0,
+      errorMessage: '',
     };
     this.onStepPress = this.onStepPress.bind(this);
   }
@@ -38,16 +39,17 @@ class DataPlan extends React.Component {
   }
   render() {
     const theme = this.props.theme;
-    const endOfTest = () => {
-      this.setState({currentPage: 0});
-      this.viewPager.setPage(0);
-    };
     return (
       <AppContext.Consumer>
         {context => {
           console.log('context is:', context);
           return (
             <View style={{flex: 1}}>
+              <Overlay
+                isVisible={context.connectionType !== 'cellular'}
+              >
+                <Text>This is an Overlay</Text>
+            </Overlay>
               <View>
                 <StepIndicator
                   stepCount={5}
@@ -67,12 +69,13 @@ class DataPlan extends React.Component {
                 style={{flexGrow: 1}}
                 initialPage={0}
                 scrollEnabled={false}
+                horizontalScroll={false}
                 keyboardDismissMode="on-drag"
                 ref={viewPager => {
                   this.viewPager = viewPager;
                 }}>
                 <View key="0" style={styles.container}>
-                  <DataBalance initial />
+                  <DataBalance initial errMess={this.state.errorMessage} />
                   <Button
                     title="Done"
                     iconRight
@@ -84,7 +87,18 @@ class DataPlan extends React.Component {
                     icon={
                       <Evilicon name="arrow-right" size={32} color="white" />
                     }
-                    onPress={() => this.onStepPress(1)}
+                    onPress={() => {
+                      if (context.dataUsageInitialBalance === 0) {
+                        this.setState({
+                          errorMessage: 'Please enter data balance',
+                        });
+                      } else {
+                        this.setState({
+                          errorMessage: '',
+                        });
+                        this.onStepPress(1);
+                      }
+                    }}
                   />
                 </View>
                 <View key="1" style={styles.container}>
@@ -110,7 +124,9 @@ class DataPlan extends React.Component {
                 <View key="2" style={styles.container}>
                   <Download />
                   <Button
-                    disabled={!context.isDownloadComplete}
+                    disabled={
+                      !context.isDownloadComplete && !context.isDownloadStopped
+                    }
                     title="Done"
                     iconRight
                     buttonStyle={{
@@ -119,7 +135,9 @@ class DataPlan extends React.Component {
                       padding: 10,
                     }}
                     onPress={() => {
-                      this.onStepPress(3);
+                      requestAnimationFrame(() => {
+                        this.onStepPress(3);
+                      });
                     }}
                     icon={
                       <Evilicon name="arrow-right" size={32} color="white" />
@@ -127,7 +145,7 @@ class DataPlan extends React.Component {
                   />
                 </View>
                 <View key="3" style={styles.container}>
-                  <DataBalance />
+                  <DataBalance errMess={this.state.errorMessage} />
                   <Button
                     title="Done"
                     iconRight
@@ -137,8 +155,16 @@ class DataPlan extends React.Component {
                       padding: 10,
                     }}
                     onPress={() => {
-                      this.onStepPress(4);
-                      context.handleUsageComparison();
+                      if (context.dataUsageFinalBalance === 0) {
+                        this.setState({
+                          errorMessage: 'Please enter data balance again',
+                        });
+                      } else {
+                        requestAnimationFrame(() => {
+                          context.handleUsageComparison();
+                          this.onStepPress(4);
+                        });
+                      }
                     }}
                     icon={
                       <Evilicon name="arrow-right" size={32} color="white" />
@@ -158,8 +184,10 @@ class DataPlan extends React.Component {
                     raised
                     icon={<Evilicon name="check" size={32} color="white" />}
                     onPress={() => {
-                      context.handleStartOver();
-                      this.onStepPress(0);
+                      requestAnimationFrame(() => {
+                        context.handleStartOver();
+                        this.onStepPress(0);
+                      });
                     }}
                   />
                 </View>

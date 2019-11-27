@@ -34,8 +34,7 @@ export class Download extends Component {
                   }}>
                   {context.isDownloadComplete
                     ? 'Complete'
-                    : parseFloat(context.downloadProgress).toFixed(0)}{' '}
-                  %
+                    : `${parseFloat(context.downloadProgress).toFixed(0)} %`}
                 </Text>
               </ProgressCircle>
               <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
@@ -45,14 +44,11 @@ export class Download extends Component {
                   buttonStyle={{
                     backgroundColor: theme.colors.error,
                   }}
+                  disabled={context.isDownloadStopped || context.isDownloadComplete}
                   constainerStyle={{
                     marginRight: 5,
                   }}
                 />
-                {/* <Button
-                  title="delete Download"
-                  onPress={() => context.deleteDownload()}
-                /> */}
               </View>
             </Card>
           );
