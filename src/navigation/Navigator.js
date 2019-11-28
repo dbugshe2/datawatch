@@ -8,6 +8,7 @@ import DataPlan from '../screens/DataPlan';
 import DeviceInfo from '../screens/DeviceInfo';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 
+// ? this is the configuaration for the navigation menu at the bottom
 const DataManagerStack = createStackNavigator({
   DataManagerScreen: {
     screen: DataManager,
@@ -32,7 +33,7 @@ const DeviceInfoStack = createStackNavigator({
     },
   },
 });
-
+// ? the bottom tab menu
 const App = createMaterialBottomTabNavigator(
   {
     Home: {
@@ -66,7 +67,7 @@ const App = createMaterialBottomTabNavigator(
     },
   },
   {
-    initialRouteName: 'Home',
+    initialRouteName: 'Home', // ? setting initial app screen
     barStyle: {backgroundColor: '#1565C0'},
   },
 );

@@ -26,11 +26,9 @@ class App extends React.Component {
       'Warning: componentWillMount is deprecated',
       'Warning: componentWillReceiveProps is deprecated',
     ]);
-    // throw new Error('My first Sentry error!');
   }
 
   render() {
-    // Sentry.nativeCrash();
     return (
       <ThemeProvider>
         <AppContextProvider>

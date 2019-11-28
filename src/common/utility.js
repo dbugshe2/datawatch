@@ -1,12 +1,12 @@
 // eslint-disable-next-line no-unused-vars
 import * as React from 'react';
 
-// ? convert Bytes to Megabytes
+// ? convert Bytes to Megabytes - output a string with no decimals
 export const bytesToMB = Bytes => {
-  return parseFloat(Bytes / 1024 / 1024).toFixed(0);
+  return parseFloat(Bytes / 1024 / 1024).toFixed(0); //
 };
 
-// ? convert Bytes to gigabytes
+// ? convert Bytes to gigabytes - output a string with no decimals
 export const bytesToGB = Bytes => {
   return parseFloat(Bytes / 1024 / 1024 / 1024).toFixed(0);
 };
@@ -46,4 +46,3 @@ export const mbToBytes = MB => {
               </Overlay>
 
  */
-

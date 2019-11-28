@@ -286,7 +286,9 @@ class DataManager extends React.Component {
               title={this.state.usageReady ? app.name : 'Loading...'}
               subtitle={
                 this.state.usageReady
-                  ? `recieved: ${app.rxMb} sent: ${app.txMb}`
+                  ? `recieved: ${bytesToMB(app.rx)} MB sent: ${bytesToMB(
+                      app.tx,
+                    )} MB`
                   : 'Loading...'
               }
               bottomDivider

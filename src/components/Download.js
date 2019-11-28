@@ -7,11 +7,17 @@ import ProgressCircle from 'react-native-progress-circle';
 import {AppContext} from '../context/AppContext';
 
 export class Download extends Component {
+  /*
+  this component displays the progress of the current file download
+  and provides a button to stop the download
+  */
+
   render() {
-    const theme = this.props.theme;
+    const theme = this.props.theme; // this is provided the lib. - react-native-elements
     return (
       <AppContext.Consumer>
         {context => {
+          // context refers to the global state
           return (
             <Card
               title="Download in progress..."
@@ -44,7 +50,9 @@ export class Download extends Component {
                   buttonStyle={{
                     backgroundColor: theme.colors.error,
                   }}
-                  disabled={context.isDownloadStopped || context.isDownloadComplete}
+                  disabled={
+                    context.isDownloadStopped || context.isDownloadComplete
+                  }
                   constainerStyle={{
                     marginRight: 5,
                   }}

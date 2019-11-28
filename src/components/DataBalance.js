@@ -7,12 +7,20 @@ import {
   ButtonGroup,
   Input,
   withTheme,
+  Text,
 } from 'react-native-elements';
 import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../context/AppContext';
 
 export class DataBalance extends Component {
+  /*
+  This component is used to check for data balance for a selected network
+  and allows user to manually input the data balance in the device
+  */
+
   render() {
+    // this value indicates whether this is the initial data balance
+    // or the data balance after the download
     const {initial} = this.props;
     return (
       <AppContext.Consumer>
@@ -21,6 +29,7 @@ export class DataBalance extends Component {
             <View>
               <Card title="Input Current Data Plan">
                 <ButtonGroup
+                  // used to select a prefered network
                   onPress={index => context.updateNetworkIndex(index)}
                   selectedIndex={context.selectedNetworkIndex}
                   buttons={context.networkOptions}
@@ -28,6 +37,7 @@ export class DataBalance extends Component {
                 />
 
                 <Input
+                  // used to manually feed data balance value
                   placeholder="Data Balance"
                   leftIcon={<Evilicon name="close" size={25} color="#1565C0" />}
                   label="Data Balance (MB):"
@@ -42,7 +52,11 @@ export class DataBalance extends Component {
                   enablesReturnKeyAutomatically
                   errorMessage={this.props.errMess}
                 />
+                <Text>
+                  Ensure data balance has been updated ( use smaller data plan )
+                </Text>
                 <Button
+                  // used to check data usage balance for selected network
                   title="Check Data Balance"
                   type="outline"
                   onPress={() => context.handleCheckBal()}

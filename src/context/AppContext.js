@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {Component, createContext} from 'react';
 import {NativeModules, Alert, PermissionsAndroid, Platform} from 'react-native';
-import {bytesToMB, mbToBytes} from '../common/utility';
+import {mbToBytes} from '../common/utility';
 import RNImmediatePhoneCall from 'react-native-immediate-phone-call';
 import RNRestart from 'react-native-restart';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -22,46 +22,45 @@ export default class AppContextProvider extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      dataUsageTestStart: new moment().valueOf(),
-      dataUsageTestEnd: new moment().valueOf(),
-      dataUsageTotalVolume: 0,
-      dataUsageInitialBalance: 0,
-      dataUsageFinalBalance: 0,
-      selectedNetworkIndex: 0,
-      downloadProgress: 0,
-      isDownloadClicked: false,
-      isDownloadBegin: false,
-      isDownloadComplete: false,
-      isDownloadStopped: false,
-      downloadFileIndex: 0,
-      downloadFileOptions: ['5MB', '10MB', '20MB'],
-      networkOptions: ['Airtel', 'GLO', 'MTN', '9Mobile'],
-      dataUsageDiffVolume: 0,
-      dataUsageDiffVolumePercent: 0,
-      dataDeviceUsageTotal: 0,
+      dataUsageTestStart: new moment().valueOf(), // ? test start time used to retrieve data usage from device
+      dataUsageTestEnd: new moment().valueOf(), // ? test end time used to retrieve data usage from device
+      dataUsageTotalVolume: 0, // ?  difference between data balance (finalbalance - initalbalance)
+      dataUsageInitialBalance: 0, // ? initial data balance inputted by user
+      dataUsageFinalBalance: 0, // ? final data balance inputted by user
+      selectedNetworkIndex: 0, // ? index of the currently selectedd network (see array below)
+      downloadProgress: 0, // ? download progress
+      isDownloadClicked: false, // ? prevent clicking download multiple times
+      isDownloadBegin: false, // ? indicate when download begins
+      isDownloadComplete: false, // ? indicate when download is complete
+      isDownloadStopped: false, // ? initial when download is stoped
+      downloadFileIndex: 0, // ? index of selected dwonload file
+      downloadFileOptions: ['5MB', '10MB', '20MB', '50MB'], // ? list of download file sizes
+      networkOptions: ['Airtel', 'GLO', 'MTN', '9Mobile'], // ? list of networks available for balance checking
+      dataUsageDiffVolume: 0, // ? difference between device usage and operator derived usage
+      dataUsageDiffVolumePercent: 0, // ? difference as percentage
+      dataDeviceUsageTotal: 0, // ? device internet usage retrieved based on test time interval(from test start - test end-inteval)
       testResultReady: false,
       checkBalCodes: [
+        // ? code used to check for data balance for each available network
         {id: 0, carrier: 'airtel', code: '*140#'},
         {id: 1, carrier: 'glo', code: '*127*0#'},
         {id: 2, carrier: 'mtn', code: '*559#'},
         {id: 3, carrier: '9mobile', code: '*228#'},
       ],
-      brand: null,
-      ram: null,
-      osVersion: null,
-      isConnected: null,
-      connectionType: null,
-      carrier: null,
-      cellularGen: null,
-      internetReachable: null,
-      ipaddress: null,
+      brand: null, // ? device brand (derived from OS)
+      ram: null, // ? device total RAM (derived from OS)
+      osVersion: null, // ? OS version (derived from OS)
+      isConnected: null, // ? device network connection (derived from OS)
+      connectionType: null, // ? device network connection type (derived from OS)
+      carrier: null, // ? device network carrier (derived from OS)
+      cellularGen: null, // ? device cellular generation (2g, 3g, 4g) (derived from OS)
+      internetReachable: null, // ? indicate internet availability (derived from OS)
+      ipaddress: null, // ? device IP Address (derived from OS)
       loadingDeviceInfo: true,
       loadingNetInfo: true,
-      availabilityTime: 0,
-      isAvailable: true,
-      loadingAvailability: true,
     };
   }
+  // ? this method request device info from the OS (lib. react-native-net-info)
   getAllDeviceInfo = async () => {
     await Promise.all([getBrand(), getTotalMemory(), getSystemVersion()])
       .then(result => {
@@ -79,6 +78,7 @@ export default class AppContextProvider extends Component {
         });
       });
   };
+  // ? this mehtod request information about the network
   getAllNetInfo = () => {
     this.setState({loadingNetInfo: true});
     return NetInfo.addEventListener(state => {
@@ -106,15 +106,16 @@ export default class AppContextProvider extends Component {
       }
     });
   };
-  // TODO Use moment in this date
+  // ? this mehtods updates the value of the test start time
   updateDataUsageTestStart = () => {
     this.setState({dataUsageTestStart: new moment().valueOf()});
   };
-  // TODO Use moment in this date
+  // ? this mehtods updates the value of the test end time
   updateDataUsageTestEnd = () => {
     this.setState({dataUsageTestEnd: new moment().valueOf()});
   };
   checkBal = code => {
+    // ? this mehtods updates automatically dials the code for the selected network
     RNImmediatePhoneCall.immediatePhoneCall(code);
   };
   handleCheckBal = () => {
@@ -130,25 +131,28 @@ export default class AppContextProvider extends Component {
       Sentry.captureException(error);
     }
   };
-  //  ? Downoad handlers
+  // ? this method updates the value of the selected file index
   updateDownloadFileIndex = selectedIndex => {
     this.setState({downloadFileIndex: selectedIndex});
   };
   handleDownloadFile = async () => {
+    // ? this is the list of download file link provided by thinkbroadband.com
     const filesUrl = [
       'http://ipv4.download.thinkbroadband.com/5MB.zip',
       'http://ipv4.download.thinkbroadband.com/10MB.zip',
       'http://ipv4.download.thinkbroadband.com/20MB.zip',
+      'http://ipv4.download.thinkbroadband.com/50MB.zip',
     ];
     const selectedFile = filesUrl[this.state.downloadFileIndex];
     const downloadOptions = {
       fromUrl: selectedFile,
       toFile:
         RNFS.ExternalStorageDirectoryPath +
-        `/datawatch/TestFile${Math.random() * 1000 || 0}.zip`,
+        `/datawatch/TestFile${Math.random() * 1000 || 0}.zip`, // ? autogenerate the file name
       progressDivider: 4,
       begin: this.downloadbegin,
       progress: this.downloadProgress,
+      readTimeout: 10000,
     };
     const dir = await RNFS.mkdir(
       RNFS.ExternalStorageDirectoryPath + '/datawatch/',
@@ -158,7 +162,7 @@ export default class AppContextProvider extends Component {
     }
     this.updateDataUsageTestStart();
     console.log('test start logged....');
-    const download = RNFS.downloadFile(downloadOptions);
+    const download = RNFS.downloadFile(downloadOptions); // ? this is th edownload mehtos(lib react-native-fs)
     downloadId = download.jobId;
     console.log('jobID is: ' + downloadId);
     download.promise
@@ -196,6 +200,7 @@ export default class AppContextProvider extends Component {
     }
   };
   deleteDownload = () => {};
+  // ? this function stops a current file download
   cancelDownload = () => {
     try {
       if (downloadId !== -1) {
@@ -209,11 +214,13 @@ export default class AppContextProvider extends Component {
       // Sentry.captureException(error);
     }
   };
+  // ? this mehtods isused in the last step to calculate the value of the usage difference
   handleUsageComparison = () => {
     const operatorVolume = Math.abs(
       this.state.dataUsageFinalBalance - this.state.dataUsageInitialBalance,
     );
     NativeModules.DataUsageModule.getDataUsageByApp(
+      // ? this request the datausage of the datawatch app within the test time interval
       {
         packages: ['com.datawatch'],
         startDate: this.state.dataUsageTestStart,
@@ -222,45 +229,53 @@ export default class AppContextProvider extends Component {
       (err, jsonArrayStr) => {
         if (!err) {
           const app = JSON.parse(jsonArrayStr);
-          console.log(app);
-          const appTotal = app[0].total;
-          console.log('bout to run diff()');
-          this.percentUsageDiff(appTotal, mbToBytes(operatorVolume));
-          console.log('just ran diff()');
-          this.setState({
-            dataUsageTotalVolume: operatorVolume,
-            dataDeviceUsageTotal: appTotal,
-
-            testResultReady: true,
-          });
+          if (Array.isArray(app) && app != null && app.length) {
+            console.log(app);
+            const appTotal = app[0].total;
+            console.log('bout to run diff()');
+            this.percentUsageDiff(appTotal, mbToBytes(operatorVolume));
+            console.log('just ran diff()');
+            this.setState({
+              dataUsageTotalVolume: operatorVolume,
+              dataDeviceUsageTotal: appTotal,
+              testResultReady: true,
+            });
+          } else {
+            Sentry.captureException(err);
+            this.setState({testResultReady: true});
+          }
         }
       },
     );
   };
-
+  // ? this method is used to calculate the percentage differecne of two values in Bytes
+  // ? this is based on the mathematical model
   percentUsageDiff = (VUE, VOP) => {
     const VDelta = VUE - VOP;
-    console.log('this is your VUE VOP', VUE, VOP);
     const VDeltaAbs = Math.abs(VDelta);
-    const VMean = (VUE + VOP) / 2;
-    const VDiff = VDeltaAbs / VMean;
-    const VDiffPercent = VDiff * 100;
+    const sumIt = VUE + VOP;
+    const VMean = sumIt / 2;
+    const VDiffPercent = (100 * VDeltaAbs) / VMean;
     this.setState({
       dataUsageDiffVolume: VDeltaAbs,
       dataUsageDiffVolumePercent: VDiffPercent,
     });
   };
+  // ? this reatarts the application after a test to refresh the information
   handleStartOver = () => {
     RNRestart.Restart();
   };
+  // ? this method calculate the difference between inital data ballance and final data balance
   updateDataUsageTotalVolume = () => {
     const totalVolume =
       this.state.dataUsageFinalBalance - this.state.dataUsageInitialBalance;
     this.setState({dataUsageTotalVolume: totalVolume});
   };
+  // ? this method updates the value of initial data balance
   updateDataUsageInitialBalance = volume => {
     this.setState({dataUsageInitialBalance: volume});
   };
+  // ? this methods updates the value of final data balance after download
   updateDataUsageFinalBalance = volume => {
     this.setState({dataUsageFinalBalance: volume});
   };
@@ -269,33 +284,11 @@ export default class AppContextProvider extends Component {
   updateNetworkIndex = selectedIndex => {
     this.setState({selectedNetworkIndex: selectedIndex});
   };
-  checkAvailability = () => {
-    this.setState({loadingAvailability: true});
-    const val = new moment().valueOf();
-    console.log(val);
-    const result = new moment(this.state.availabilityTime).isBefore(val);
-    console.log('result of check avaulability was: ', result);
-    this.setState({isAvailable: result, loadingAvailability: false});
-  };
-  setAvailability = async () => {
-    try {
-      this.setState({loadingAvailability: true});
-      let availability = await AsyncStorage.getItem('@availabilitytime');
-      if (availability !== null) {
-        availability = JSON.parse(availability);
-        this.setState({
-          availabilityTime: availability.time,
-          loadingAvailability: false,
-        });
-      }
-    } catch (error) {
-      Sentry.captureException(error);
-    }
-  };
+
   // ? Did Mount
   async componentDidMount() {
     //#region
-    console.log('running mount context', {...this.state});
+    // ? this methods request permission to access device internet usage
     if (NativeModules.DataUsageModule) {
       // Check if app has permission to access data usage by apps
       // This way will not ask for permissions (check only)
@@ -314,7 +307,7 @@ export default class AppContextProvider extends Component {
               [
                 {
                   text: 'Give permission',
-                  onPress: () => this.requestAppPermissions(),
+                  onPress: () => this.requestPermissions(),
                 },
               ],
               {cancelable: false},
@@ -323,7 +316,7 @@ export default class AppContextProvider extends Component {
         },
       );
     }
-    // Other Permissions
+    // ? requesting required Permissions from user
     if (Platform.OS === 'android') {
       PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
@@ -334,10 +327,8 @@ export default class AppContextProvider extends Component {
     }
     this.getAllDeviceInfo();
     this.getAllNetInfo();
-    this.setAvailability();
 
     //#endregion
-    // 1574846755471
   }
   render() {
     return (
@@ -357,7 +348,6 @@ export default class AppContextProvider extends Component {
           deleteDownload: this.deleteDownload,
           handleStartOver: this.handleStartOver,
           handleUsageComparison: this.handleUsageComparison,
-          checkAvailability: this.checkAvailability,
         }}>
         {this.props.children}
       </AppContext.Provider>

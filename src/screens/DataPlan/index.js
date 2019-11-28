@@ -7,7 +7,6 @@ import Evilicon from 'react-native-vector-icons/EvilIcons';
 import {AppContext} from '../../context/AppContext';
 import ViewPager from '@react-native-community/viewpager';
 import StepIndicator from 'react-native-step-indicator';
-import {NavigationEvents} from 'react-navigation';
 import styles from './styles';
 import DataBalance from '../../components/DataBalance';
 import DownloadSelect from '../../components/DownloadSelect';
@@ -15,8 +14,6 @@ import Download from '../../components/Download';
 import UsageComparison from '../../components/UsageComparison';
 import moment from 'moment';
 class DataPlan extends React.Component {
-  // static contextType = AppContext;
-
   constructor(props) {
     super(props);
     this.state = {
@@ -45,12 +42,6 @@ class DataPlan extends React.Component {
           console.log('context is:', context);
           return (
             <View style={{flex: 1}}>
-              {/* <NavigationEvents
-                onDidFocus={payload => {
-                  context.checkAvailability();
-                  console.log('ran checkavailbility', {...payload});
-                }}
-              /> */}
               <View>
                 <StepIndicator
                   stepCount={5}
@@ -93,14 +84,6 @@ class DataPlan extends React.Component {
                         Alert.alert(
                           'please enable mobile data connection',
                           'this test depends on mobile internet for propoer results',
-                        );
-                      } else if (!context.isAvailable) {
-                        Alert.alert(
-                          'Time Limit For Test Iteration',
-                          `Due OS limitaitons you can only perform one test within 28hrs:
-                          next test is available from ${new moment(
-                            context.availbilityTime,
-                          ).toNow()}`,
                         );
                       } else {
                         if (context.dataUsageInitialBalance === 0) {
