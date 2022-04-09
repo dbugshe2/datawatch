@@ -16,7 +16,7 @@
     "@react-native-community/viewpager": "^2.0.2",
     "@sentry/react-native": "^1.1.0",
     "mathjs": "^3.17.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "react": "16.9.0",
     "react-native": "0.60.0",
     "react-native-android-datausage": "git+https://github.com/shimatai/react-native-android-datausage.git",
