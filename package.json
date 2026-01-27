@@ -14,7 +14,7 @@
     "@react-native-community/datetimepicker": "^2.1.0",
     "@react-native-community/netinfo": "^4.4.0",
     "@react-native-community/viewpager": "^2.0.2",
-    "@sentry/react-native": "^1.1.0",
+    "@sentry/react-native": "^7.10.0",
     "mathjs": "^3.17.0",
     "moment": "^2.24.0",
     "react": "16.9.0",
